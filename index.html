@@ -80,7 +80,7 @@
                 </div>
                 <div>
                     <h1 class="font-bold text-lg">بوت خدمة أولياء الأمور</h1>
-                    <p class="text-blue-100 text-sm" id="connectionStatus">✅ متصل</p>
+                    <p class="text-blue-100 text-sm" id="connectionStatus">🔄 جاري الاتصال بالخادم...</p>
                 </div>
             </div>
         </div>
@@ -112,13 +112,13 @@
                         <span class="text-blue-700 text-xs font-bold">مساعد المدرسة</span>
                     </div>
                     <p class="text-gray-800 text-sm font-medium">مرحباً بك في بوت خدمة أولياء الأمور! 👋</p>
-                    <p class="text-gray-600 text-xs mt-1">اختر الخدمة المطلوبة من الأسفل.</p>
+                    <p class="text-gray-600 text-xs mt-1">جاري تحميل البيانات من الخادم...</p>
                 </div>
             </div>
         </div>
 
         <!-- Loading Indicator -->
-        <div id="loadingIndicator" class="flex justify-center p-3 bg-gray-50 hidden">
+        <div id="loadingIndicator" class="flex justify-center p-3 bg-gray-50">
             <div class="bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg p-3 shadow w-full max-w-xs">
                 <div class="flex items-center justify-center space-x-2 space-x-reverse">
                     <div class="typing-dots">
@@ -126,13 +126,13 @@
                         <span class="bg-white"></span>
                         <span class="bg-white"></span>
                     </div>
-                    <p class="font-medium text-sm">جاري التحميل...</p>
+                    <p class="font-medium text-sm">جاري تحميل البيانات من الخادم...</p>
                 </div>
             </div>
         </div>
 
         <!-- Services Container -->
-        <div id="servicesContainer" class="p-3 bg-gray-50">
+        <div id="servicesContainer" class="p-3 bg-gray-50 hidden">
             <div class="message-bubble">
                 <div class="bg-blue-100 rounded-xl p-3 border border-blue-200">
                     <p class="text-gray-800 font-bold mb-2 text-sm">🚀 اختر الخدمة المطلوبة:</p>
@@ -194,123 +194,104 @@
     </div>
 
     <script>
-        // البيانات الكاملة مع التسلسل الهرمي
-        const botData = {
-            services: {
-                'schedule': { 
-                    name: 'الجدول الدراسي', 
-                    icon: '📅',
-                    sections: [
-                        { 
-                            name: 'الصف الأول', 
-                            description: 'الجدول الأسبوعي للصف الأول',
-                            content: [
-                                { type: 'text', content: '📅 **الجدول الدراسي للصف الأول**\n\n**الأحد:**\n• رياضيات (8:00 - 9:00)\n• عربي (9:00 - 10:00)\n• علوم (10:30 - 11:30)\n\n**الاثنين:**\n• إنجليزي (8:00 - 9:00)\n• تاريخ (9:00 - 10:00)\n• رياضة (10:30 - 11:30)' },
-                                { type: 'pdf', title: 'جدول الحصص', fileUrl: '/files/schedule1.pdf' }
-                            ]
-                        },
-                        { 
-                            name: 'الصف الثاني', 
-                            description: 'الجدول الأسبوعي للصف الثاني',
-                            content: [
-                                { type: 'text', content: '📅 **الجدول الدراسي للصف الثاني**\n\n**الأحد:**\n• علوم (8:00 - 9:00)\n• عربي (9:00 - 10:00)\n• رياضيات (10:30 - 11:30)\n\n**الاثنين:**\n• إنجليزي (8:00 - 9:00)\n• تربية إسلامية (9:00 - 10:00)\n• رياضة (10:30 - 11:30)' }
-                            ]
-                        },
-                        { 
-                            name: 'الصف الثالث', 
-                            description: 'الجدول الأسبوعي للصف الثالث',
-                            content: [
-                                { type: 'text', content: '📅 **الجدول الدراسي للصف الثالث**\n\n**الأحد:**\n• إنجليزي (8:00 - 9:00)\n• رياضيات (9:00 - 10:00)\n• علوم (10:30 - 11:30)\n\n**الاثنين:**\n• عربي (8:00 - 9:00)\n• تربية إسلامية (9:00 - 10:00)\n• رياضة (10:30 - 11:30)' }
-                            ]
-                        }
-                    ] 
-                },
-                'homework': { 
-                    name: 'الواجبات المنزلية', 
-                    icon: '📝',
-                    sections: [
-                        { 
-                            name: 'الصف الأول', 
-                            description: 'الواجبات المطلوبة للصف الأول',
-                            content: [
-                                { type: 'text', content: '📝 **واجبات الصف الأول**\n\n**الرياضيات:**\n• حل التمارين من صفحة 45 إلى 47\n• حفظ جدول الضرب للعدد 2\n\n**اللغة العربية:**\n• كتابة موضوع تعبير عن "المدرسة"\n• قراءة القصة من صفحة 23\n\n⏰ **موعد التسليم:** غداً' }
-                            ]
-                        },
-                        { 
-                            name: 'الصف الثاني', 
-                            description: 'الواجبات المطلوبة للصف الثاني',
-                            content: [
-                                { type: 'text', content: '📝 **واجبات الصف الثاني**\n\n**الرياضيات:**\n• حل المسائل من صفحة 32 إلى 35\n• مراجعة درس الكسور\n\n**اللغة العربية:**\n• إملاء الفقرة الأولى من الدرس\n• كتابة 10 أسطر عن النظافة\n\n⏰ **موعد التسليم:** بعد غد' }
-                            ]
-                        }
-                    ] 
-                },
-                'ai': { 
-                    name: 'المساعد الذكي', 
-                    icon: '🤖',
-                    sections: [] 
-                },
-                'broadcast': { 
-                    name: 'البروكاست', 
-                    icon: '📢',
-                    sections: [] 
-                },
-                'programs': { 
-                    name: 'البرامج والمسابقات', 
-                    icon: '🏆',
-                    sections: [
-                        { 
-                            name: 'المسابقات', 
-                            description: 'المسابقات الحالية',
-                            content: [
-                                { type: 'text', content: '🏆 **المسابقات الحالية**\n\n🎯 **مسابقة القرآن الكريم**\n• التسجيل مفتوح حتى 20 فبراير\n• للمراحل من الثالث إلى السادس\n\n🎯 **مسابقة الرياضيات**\n• المرحلة النهائية 25 فبراير\n\n🎯 **برنامج المواهب الطلابية**\n• يبدأ 20 فبراير\n• يشمل الرسم، الخطابة، والأنشطة الفنية' }
-                            ]
-                        }
-                    ] 
-                },
-                'files': { 
-                    name: 'الملفات المرسلة', 
-                    icon: '📁',
-                    sections: [
-                        { 
-                            name: 'ملفات الصف الأول', 
-                            description: 'جميع الملفات المرسلة للصف الأول',
-                            content: [
-                                { type: 'pdf', title: 'جدول الاختبارات النهائية', fileUrl: '/files/exam-schedule.pdf' },
-                                { type: 'pdf', title: 'قائمة الكتب المطلوبة', fileUrl: '/files/books-list.pdf' },
-                                { type: 'image', title: 'صورة الفعاليات', fileUrl: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400' }
-                            ]
-                        },
-                        { 
-                            name: 'ملفات الصف الثاني', 
-                            description: 'جميع الملفات المرسلة للصف الثاني',
-                            content: [
-                                { type: 'pdf', title: 'دليل ولي الأمر', fileUrl: '/files/parent-guide.pdf' },
-                                { type: 'pdf', title: 'التقويم الدراسي 2024', fileUrl: '/files/calendar-2024.pdf' }
-                            ]
-                        }
-                    ] 
-                },
-                'exams': { 
-                    name: 'الاختبارات', 
-                    icon: '📋',
-                    sections: [] 
-                },
-                'contact': { 
-                    name: 'تواصل معنا', 
-                    icon: '📞',
-                    sections: [] 
-                }
-            }
-        };
-
+        const API_URL = '/api/data';
+        let botData = null;
         let currentService = null;
         let currentSection = null;
         let currentImageUrl = null;
 
-        // تهيئة التطبيق
-        function initializeApp() {
+        // Initialize Telegram Web App
+        if (window.Telegram && Telegram.WebApp) {
+            Telegram.WebApp.ready();
+            Telegram.WebApp.expand();
+        }
+
+        // Load data from server
+        async function loadData() {
+            showLoading(true);
+            updateStatus('🔄 جاري الاتصال بالخادم...');
+            
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) {
+                    throw new Error('فشل في جلب البيانات');
+                }
+                
+                botData = await response.json();
+                updateStatus('✅ متصل - البيانات محدثة');
+                showLoading(false);
+                showMainServices();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                updateStatus('❌ خطأ في الاتصال - استخدام بيانات محلية');
+                showLoading(false);
+                useDefaultData();
+            }
+        }
+
+        function useDefaultData() {
+            botData = {
+                services: {
+                    'schedule': { 
+                        name: 'الجدول الدراسي', 
+                        icon: '📅',
+                        sections: [
+                            { 
+                                name: 'الصف الأول', 
+                                description: 'الجدول الأسبوعي للصف الأول',
+                                content: [
+                                    { type: 'text', content: '📅 **الجدول الدراسي للصف الأول**\n\n**الأحد:**\n• رياضيات (8:00 - 9:00)\n• عربي (9:00 - 10:00)\n• علوم (10:30 - 11:30)\n\n**الاثنين:**\n• إنجليزي (8:00 - 9:00)\n• تاريخ (9:00 - 10:00)\n• رياضة (10:30 - 11:30)' }
+                                ]
+                            }
+                        ] 
+                    },
+                    'homework': { 
+                        name: 'الواجبات المنزلية', 
+                        icon: '📝',
+                        sections: [] 
+                    },
+                    'ai': { 
+                        name: 'المساعد الذكي', 
+                        icon: '🤖',
+                        sections: [] 
+                    },
+                    'broadcast': { 
+                        name: 'البروكاست', 
+                        icon: '📢',
+                        sections: [] 
+                    },
+                    'programs': { 
+                        name: 'البرامج والمسابقات', 
+                        icon: '🏆',
+                        sections: [] 
+                    },
+                    'files': { 
+                        name: 'الملفات المرسلة', 
+                        icon: '📁',
+                        sections: [] 
+                    },
+                    'exams': { 
+                        name: 'الاختبارات', 
+                        icon: '📋',
+                        sections: [] 
+                    },
+                    'contact': { 
+                        name: 'تواصل معنا', 
+                        icon: '📞',
+                        sections: [] 
+                    }
+                }
+            };
             showMainServices();
+        }
+
+        function updateStatus(status) {
+            document.getElementById('connectionStatus').textContent = status;
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingIndicator').classList.toggle('hidden', !show);
         }
 
         // إظهار الخدمات الرئيسية (المستوى 1)
@@ -335,10 +316,12 @@
 
             serviceButtons.forEach(button => {
                 const service = botData.services[button.key];
+                if (!service) return;
+                
                 const buttonElement = document.createElement('button');
                 buttonElement.className = `bg-gradient-to-r ${button.color} hover:from-${button.color.split('-')[1]}-600 hover:to-${button.color.split('-')[3]}-600 text-white p-2 rounded-lg text-xs font-medium transition-all service-card flex flex-col items-center justify-center h-14`;
                 buttonElement.innerHTML = `
-                    <span class="text-sm mb-1">${service.icon}</span>
+                    <span class="text-sm mb-1">${service.icon || button.icon}</span>
                     <span class="text-xs">${service.name}</span>
                 `;
                 buttonElement.onclick = () => selectService(button.key);
@@ -347,14 +330,39 @@
         }
 
         // اختيار خدمة (المستوى 2)
-        function selectService(serviceKey) {
+        async function selectService(serviceKey) {
             currentService = serviceKey;
             const service = botData.services[serviceKey];
+            
+            if (!service) {
+                useDefaultServiceResponse(serviceKey);
+                return;
+            }
             
             if (service.sections && service.sections.length > 0) {
                 showServiceSections(serviceKey);
             } else {
-                showServiceContent(serviceKey, null);
+                // جلب البيانات الحية من الخادم
+                showLoading(true);
+                try {
+                    const response = await fetch(API_URL);
+                    if (response.ok) {
+                        const liveData = await response.json();
+                        const liveService = liveData.services[serviceKey];
+                        if (liveService && liveService.sections) {
+                            service.sections = liveService.sections;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error fetching service data:', error);
+                }
+                showLoading(false);
+                
+                if (service.sections && service.sections.length > 0) {
+                    showServiceSections(serviceKey);
+                } else {
+                    showServiceContent(serviceKey, null);
+                }
             }
         }
 
@@ -371,6 +379,16 @@
             sectionsContainer.innerHTML = '';
 
             const service = botData.services[serviceKey];
+            if (!service.sections || service.sections.length === 0) {
+                sectionsContainer.innerHTML = `
+                    <div class="message-bubble">
+                        <div class="bg-blue-100 rounded-xl p-3 border border-blue-200">
+                            <p class="text-gray-800 text-sm">لا توجد أقسام متاحة حالياً.</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
             
             let sectionsHtml = `
                 <div class="message-bubble">
@@ -398,9 +416,29 @@
         }
 
         // اختيار قسم (المستوى 3)
-        function selectSection(serviceKey, sectionIndex) {
+        async function selectSection(serviceKey, sectionIndex) {
             currentService = serviceKey;
             currentSection = sectionIndex;
+            
+            const service = botData.services[serviceKey];
+            const section = service.sections[sectionIndex];
+            
+            // جلب المحتوى الحقيقي من الخادم
+            showLoading(true);
+            try {
+                const response = await fetch(API_URL);
+                if (response.ok) {
+                    const liveData = await response.json();
+                    const liveService = liveData.services[serviceKey];
+                    if (liveService && liveService.sections && liveService.sections[sectionIndex]) {
+                        section.content = liveService.sections[sectionIndex].content;
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching section content:', error);
+            }
+            showLoading(false);
+            
             showServiceContent(serviceKey, sectionIndex);
         }
 
@@ -426,58 +464,85 @@
                             ${section.description ? `<p class="text-gray-600 mb-2 bg-white/50 p-2 rounded text-xs">${section.description}</p>` : ''}
                 `;
                 
-                section.content.forEach(item => {
-                    if (item.type === 'text') {
-                        contentHtml += `
-                            <div class="bg-white p-3 rounded-lg border border-gray-200 mb-2">
-                                <p class="text-gray-800 whitespace-pre-line text-xs">${item.content}</p>
-                            </div>
-                        `;
-                    } else if (item.type === 'pdf') {
-                        contentHtml += `
-                            <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2 flex items-center justify-between file-item">
-                                <div class="flex items-center">
-                                    <span class="ml-2 text-lg">📄</span>
-                                    <div>
-                                        <p class="text-gray-800 font-medium text-xs">${item.title}</p>
-                                        <p class="text-gray-500 text-xs">ملف PDF</p>
-                                    </div>
+                if (section.content && section.content.length > 0) {
+                    section.content.forEach(item => {
+                        if (item.type === 'text') {
+                            contentHtml += `
+                                <div class="bg-white p-3 rounded-lg border border-gray-200 mb-2">
+                                    <p class="text-gray-800 whitespace-pre-line text-xs">${item.content}</p>
                                 </div>
-                                <div class="flex space-x-1 space-x-reverse">
-                                    <a href="${item.fileUrl}" target="_blank" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs transition-colors">
-                                        معاينة
-                                    </a>
-                                    <a href="${item.fileUrl}" download class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors">
-                                        تحميل
-                                    </a>
-                                </div>
-                            </div>
-                        `;
-                    } else if (item.type === 'image') {
-                        contentHtml += `
-                            <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2 file-item">
-                                <div class="flex items-center justify-between mb-2">
+                            `;
+                        } else if (item.type === 'pdf' || item.type === 'file') {
+                            const fileUrl = item.fileUrl || item.url;
+                            contentHtml += `
+                                <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2 flex items-center justify-between file-item">
                                     <div class="flex items-center">
-                                        <span class="ml-2 text-lg">🖼️</span>
+                                        <span class="ml-2 text-lg">📄</span>
                                         <div>
-                                            <p class="text-gray-800 font-medium text-xs">${item.title}</p>
-                                            <p class="text-gray-500 text-xs">صورة</p>
+                                            <p class="text-gray-800 font-medium text-xs">${item.title || item.name}</p>
+                                            <p class="text-gray-500 text-xs">ملف PDF</p>
                                         </div>
                                     </div>
                                     <div class="flex space-x-1 space-x-reverse">
-                                        <button onclick="openImageModal('${item.fileUrl}')" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs transition-colors">
+                                        <a href="${fileUrl}" target="_blank" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs transition-colors">
                                             معاينة
-                                        </button>
-                                        <a href="${item.fileUrl}" download class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors">
+                                        </a>
+                                        <a href="${fileUrl}" download class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors">
                                             تحميل
                                         </a>
                                     </div>
                                 </div>
-                                <img src="${item.fileUrl}" alt="${item.title}" class="w-full rounded-lg cursor-pointer" onclick="openImageModal('${item.fileUrl}')">
-                            </div>
-                        `;
-                    }
-                });
+                            `;
+                        } else if (item.type === 'image') {
+                            const fileUrl = item.fileUrl || item.url;
+                            contentHtml += `
+                                <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2 file-item">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div class="flex items-center">
+                                            <span class="ml-2 text-lg">🖼️</span>
+                                            <div>
+                                                <p class="text-gray-800 font-medium text-xs">${item.title || item.name}</p>
+                                                <p class="text-gray-500 text-xs">صورة</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex space-x-1 space-x-reverse">
+                                            <button onclick="openImageModal('${fileUrl}')" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs transition-colors">
+                                                معاينة
+                                            </button>
+                                            <a href="${fileUrl}" download class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors">
+                                                تحميل
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <img src="${fileUrl}" alt="${item.title || item.name}" class="w-full rounded-lg cursor-pointer" onclick="openImageModal('${fileUrl}')">
+                                </div>
+                            `;
+                        } else if (item.type === 'link') {
+                            contentHtml += `
+                                <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2 file-item">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <span class="ml-2 text-lg">🔗</span>
+                                            <div>
+                                                <p class="text-gray-800 font-medium text-xs">${item.title}</p>
+                                                <p class="text-gray-500 text-xs">رابط</p>
+                                            </div>
+                                        </div>
+                                        <a href="${item.url}" target="_blank" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs transition-colors">
+                                            فتح الرابط
+                                        </a>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    });
+                } else {
+                    contentHtml += `
+                        <div class="bg-white p-3 rounded-lg border border-gray-200">
+                            <p class="text-gray-800 text-sm">لا يوجد محتوى متاح حالياً في هذا القسم.</p>
+                        </div>
+                    `;
+                }
                 
                 contentHtml += `</div></div>`;
             } else {
@@ -534,9 +599,16 @@
                 'ai': '🤖 **المساعد الذكي**\n\nمرحباً! أنا مساعدك الذكي للرد على استفساراتك المدرسية.\n\nما الذي تريد أن تسأل عنه؟',
                 'broadcast': '📢 **آخر الإعلانات**\n\n• اجتماع أولياء الأمور: الخميس القادم\n• إجازة نصف العام: تبدأ 15 فبراير\n• اختبار الرياضيات: الأربعاء',
                 'exams': '📋 **الاختبارات القادمة**\n\n• الرياضيات: الأربعاء 10 فبراير\n• اللغة العربية: الخميس 11 فبراير\n• العلوم: الأحد 14 فبراير',
-                'contact': '📞 **معلومات التواصل**\n\n• الهاتف: 011-234-5678\n• البريد: info@school.edu.sa\n• العنوان: شارع التعليم، الرياض'
+                'contact': '📞 **معلومات التواصل**\n\n• الهاتف: 011-234-5678\n• البريد: info@school.edu.sa\n• العنوان: شارع التعليم، الرياض',
+                'homework': '📝 **الواجبات المطلوبة**\n\n• الرياضيات: حل التمارين ص 45-47\n• العربي: كتابة موضوع تعبير\n• العلوم: قراءة الفصل الثالث\n• الإنجليزي: حفظ المفردات الجديدة',
+                'programs': '🏆 **البرامج والمسابقات**\n\n• مسابقة القرآن الكريم\n• برنامج المواهب الطلابية\n• مسابقة الرياضيات\n• معرض العلوم السنوي'
             };
             return defaultContents[serviceKey] || 'المحتوى غير متوفر حالياً.';
+        }
+
+        function useDefaultServiceResponse(service) {
+            const response = getDefaultServiceContent(service);
+            addMessage(response, false);
         }
 
         // إرسال رسالة
@@ -577,7 +649,7 @@
             } else {
                 messageDiv.innerHTML = `
                     <div class="bg-blue-100 rounded-xl p-3 max-w-xs border border-blue-200">
-                        <p class="text-gray-800 text-sm">${text}</p>
+                        <p class="text-gray-800 text-sm whitespace-pre-line">${text}</p>
                     </div>
                 `;
             }
@@ -594,7 +666,9 @@
         });
 
         // بدء التطبيق
-        document.addEventListener('DOMContentLoaded', initializeApp);
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+        });
     </script>
 </body>
 </html>
