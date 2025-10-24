@@ -96,6 +96,28 @@
             transform: scale(1.05);
             box-shadow: 0 8px 25px rgba(255, 107, 107, 0.6);
         }
+        /* أزرار الأقسام */
+        .section-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+        .section-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+        }
         /* إخفاء واجهة JotForm الافتراضية */
         .jf-agent-widget {
             display: none !important;
@@ -140,11 +162,25 @@
         </div>
     </div>
 
+    <!-- Section Content Container -->
+    <div id="sectionContentContainer" class="max-w-md mx-auto bg-white hidden">
+        <div class="p-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-green-50 to-blue-50">
+            <button onclick="backToSections()" class="back-button">
+                <span>⬅</span>
+                <span>العودة إلى الأقسام</span>
+            </button>
+            <h3 id="sectionTitle" class="font-bold text-gray-800 text-lg"></h3>
+        </div>
+        <div id="sectionContent" class="service-content p-4">
+            <!-- Section content will be displayed here -->
+        </div>
+    </div>
+
     <!-- Floating Back Button -->
     <div id="floatingBackButton" class="fixed bottom-6 left-6 z-50 hidden">
-        <button onclick="backToServices()" class="floating-back-button">
+        <button onclick="handleFloatingBack()" class="floating-back-button">
             <span>↶</span>
-            <span>رجوع</span>
+            <span id="floatingBackText">رجوع</span>
         </button>
     </div>
 
@@ -231,6 +267,8 @@
         let botData = null;
         const API_URL = '/api/data';
         let jotformAIReady = false;
+        let currentServiceData = null;
+        let currentView = 'services'; // 'services', 'serviceSections', 'sectionContent'
         
         // Initialize Telegram Web App
         if (window.Telegram && Telegram.WebApp) {
@@ -334,7 +372,7 @@
                 showLoading(false);
                 
                 if (serviceData && serviceData.sections && serviceData.sections.length > 0) {
-                    displayServiceContent(serviceData);
+                    displayServiceSections(serviceData);
                 } else {
                     useDefaultServiceResponse(service);
                 }
@@ -345,119 +383,167 @@
             }
         }
 
-        function displayServiceContent(serviceData) {
+        // عرض أقسام الخدمة كأزرار
+        function displayServiceSections(serviceData) {
+            currentServiceData = serviceData;
+            currentView = 'serviceSections';
+            
             document.getElementById('chatContainer').classList.add('hidden');
             document.getElementById('serviceContentContainer').classList.remove('hidden');
+            document.getElementById('sectionContentContainer').classList.add('hidden');
             document.getElementById('floatingBackButton').classList.remove('hidden');
+            document.getElementById('floatingBackText').textContent = 'رجوع للخدمات';
             
             document.getElementById('serviceTitle').textContent = serviceData.name;
             
-            let contentHtml = '';
+            let contentHtml = `
+                <div class="text-center mb-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">${serviceData.name}</h3>
+                    <p class="text-gray-600">اختر القسم المطلوب:</p>
+                </div>
+                <div class="space-y-3">
+            `;
             
-            serviceData.sections.forEach(section => {
+            serviceData.sections.forEach((section, index) => {
                 contentHtml += `
-                    <div class="mb-6">
-                        <h4 class="font-bold text-gray-800 text-lg mb-3 border-b pb-2">${section.name}</h4>
+                    <button onclick="selectSection(${index})" class="section-button">
+                        <span>📁</span>
+                        <span>${section.name}</span>
+                    </button>
                 `;
-                
-                if (section.description && section.description !== 'لا يوجد وصف') {
-                    contentHtml += `<p class="text-gray-600 mb-4">${section.description}</p>`;
-                }
-                
-                if (section.content && section.content.length > 0) {
-                    section.content.forEach(item => {
-                        if (item.type === 'text') {
-                            contentHtml += `
-                                <div class="bg-gray-50 p-4 rounded-lg mb-3">
-                                    <div class="flex items-start space-x-2 space-x-reverse">
-                                        <span class="text-gray-500 mt-1">📄</span>
-                                        <div>
-                                            ${item.title ? `<h5 class="font-semibold text-gray-800 mb-2">${item.title}</h5>` : ''}
-                                            <p class="text-gray-700 whitespace-pre-line">${item.content}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                        } else if (item.type === 'file') {
-                            contentHtml += `
-                                <div class="bg-green-50 p-4 rounded-lg mb-3">
-                                    <div class="flex items-start space-x-2 space-x-reverse">
-                                        <span class="text-green-600 mt-1">📎</span>
-                                        <div class="flex-1">
-                                            <h5 class="font-semibold text-green-800 mb-1">${item.name}</h5>
-                                            <p class="text-green-700 text-sm mb-2">${item.description || 'ملف مرفوع'}</p>
-                                            ${item.fileUrl ? `
-                                                <a href="${window.location.origin}${item.fileUrl}" 
-                                                   target="_blank"
-                                                   class="inline-block bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors">
-                                                    📥 تحميل الملف
-                                                </a>
-                                            ` : ''}
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                        } else if (item.type === 'image') {
-                            contentHtml += `
-                                <div class="bg-yellow-50 p-4 rounded-lg mb-3">
-                                    <div class="flex items-start space-x-2 space-x-reverse">
-                                        <span class="text-yellow-600 mt-1">🖼️</span>
-                                        <div class="flex-1">
-                                            <h5 class="font-semibold text-yellow-800 mb-2">${item.title}</h5>
-                                            ${item.fileUrl ? `
-                                                <img src="${window.location.origin}${item.fileUrl}" 
-                                                     alt="${item.description || 'صورة'}"
-                                                     class="w-full max-w-md rounded-lg mb-2 border">
-                                            ` : ''}
-                                            <p class="text-yellow-700 text-sm mb-2">${item.description || 'صورة مرفوعة'}</p>
-                                            ${item.fileUrl ? `
-                                                <a href="${window.location.origin}${item.fileUrl}" 
-                                                   target="_blank"
-                                                   class="inline-block bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700 transition-colors">
-                                                    👁️ عرض الصورة
-                                                </a>
-                                            ` : ''}
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                        } else if (item.type === 'link') {
-                            contentHtml += `
-                                <div class="bg-purple-50 p-4 rounded-lg mb-3">
-                                    <div class="flex items-start space-x-2 space-x-reverse">
-                                        <span class="text-purple-600 mt-1">🔗</span>
-                                        <div class="flex-1">
-                                            <h5 class="font-semibold text-purple-800 mb-1">${item.title}</h5>
-                                            <p class="text-purple-700 text-sm mb-2">${item.description || 'رابط خارجي'}</p>
-                                            <a href="${item.url}" 
-                                               target="_blank"
-                                               class="inline-block bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700 transition-colors">
-                                                🌐 زيارة الرابط
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                        }
-                    });
-                } else {
-                    contentHtml += `
-                        <div class="text-center py-4 bg-gray-50 rounded-lg">
-                            <p class="text-gray-500">لا يوجد محتوى في هذا القسم</p>
-                        </div>
-                    `;
-                }
-                
-                contentHtml += `</div>`;
             });
-
+            
+            contentHtml += `</div>`;
+            
             document.getElementById('serviceContent').innerHTML = contentHtml;
         }
 
-        function backToServices() {
+        // اختيار قسم معين
+        function selectSection(sectionIndex) {
+            const section = currentServiceData.sections[sectionIndex];
+            currentView = 'sectionContent';
+            
             document.getElementById('serviceContentContainer').classList.add('hidden');
+            document.getElementById('sectionContentContainer').classList.remove('hidden');
+            document.getElementById('floatingBackButton').classList.remove('hidden');
+            document.getElementById('floatingBackText').textContent = 'رجوع للأقسام';
+            
+            document.getElementById('sectionTitle').textContent = section.name;
+            
+            let contentHtml = '';
+            
+            if (section.description && section.description !== 'لا يوجد وصف') {
+                contentHtml += `<p class="text-gray-600 mb-4 text-center">${section.description}</p>`;
+            }
+            
+            if (section.content && section.content.length > 0) {
+                section.content.forEach((item, itemIndex) => {
+                    if (item.type === 'text') {
+                        contentHtml += `
+                            <div class="bg-gray-50 p-4 rounded-lg mb-3">
+                                <div class="flex items-start space-x-2 space-x-reverse">
+                                    <span class="text-gray-500 mt-1">📄</span>
+                                    <div>
+                                        ${item.title ? `<h5 class="font-semibold text-gray-800 mb-2">${item.title}</h5>` : ''}
+                                        <p class="text-gray-700 whitespace-pre-line">${item.content}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else if (item.type === 'file') {
+                        contentHtml += `
+                            <div class="bg-green-50 p-4 rounded-lg mb-3">
+                                <div class="flex items-start space-x-2 space-x-reverse">
+                                    <span class="text-green-600 mt-1">📎</span>
+                                    <div class="flex-1">
+                                        <h5 class="font-semibold text-green-800 mb-1">${item.name}</h5>
+                                        <p class="text-green-700 text-sm mb-2">${item.description || 'ملف مرفوع'}</p>
+                                        ${item.fileUrl ? `
+                                            <a href="${window.location.origin}${item.fileUrl}" 
+                                               target="_blank"
+                                               class="inline-block bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors">
+                                                📥 تحميل الملف
+                                            </a>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else if (item.type === 'image') {
+                        contentHtml += `
+                            <div class="bg-yellow-50 p-4 rounded-lg mb-3">
+                                <div class="flex items-start space-x-2 space-x-reverse">
+                                    <span class="text-yellow-600 mt-1">🖼️</span>
+                                    <div class="flex-1">
+                                        <h5 class="font-semibold text-yellow-800 mb-2">${item.title}</h5>
+                                        ${item.fileUrl ? `
+                                            <img src="${window.location.origin}${item.fileUrl}" 
+                                                 alt="${item.description || 'صورة'}"
+                                                 class="w-full max-w-md rounded-lg mb-2 border">
+                                        ` : ''}
+                                        <p class="text-yellow-700 text-sm mb-2">${item.description || 'صورة مرفوعة'}</p>
+                                        ${item.fileUrl ? `
+                                            <a href="${window.location.origin}${item.fileUrl}" 
+                                               target="_blank"
+                                               class="inline-block bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700 transition-colors">
+                                                👁️ عرض الصورة
+                                            </a>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else if (item.type === 'link') {
+                        contentHtml += `
+                            <div class="bg-purple-50 p-4 rounded-lg mb-3">
+                                <div class="flex items-start space-x-2 space-x-reverse">
+                                    <span class="text-purple-600 mt-1">🔗</span>
+                                    <div class="flex-1">
+                                        <h5 class="font-semibold text-purple-800 mb-1">${item.title}</h5>
+                                        <p class="text-purple-700 text-sm mb-2">${item.description || 'رابط خارجي'}</p>
+                                        <a href="${item.url}" 
+                                           target="_blank"
+                                           class="inline-block bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700 transition-colors">
+                                            🌐 زيارة الرابط
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+            } else {
+                contentHtml += `
+                    <div class="text-center py-8 bg-gray-50 rounded-lg">
+                        <div class="text-4xl mb-2">📭</div>
+                        <p class="text-gray-500">لا يوجد محتوى في هذا القسم</p>
+                    </div>
+                `;
+            }
+
+            document.getElementById('sectionContent').innerHTML = contentHtml;
+        }
+
+        function backToServices() {
+            currentView = 'services';
+            document.getElementById('serviceContentContainer').classList.add('hidden');
+            document.getElementById('sectionContentContainer').classList.add('hidden');
             document.getElementById('floatingBackButton').classList.add('hidden');
             document.getElementById('chatContainer').classList.remove('hidden');
+        }
+
+        function backToSections() {
+            if (currentServiceData) {
+                displayServiceSections(currentServiceData);
+            }
+        }
+
+        function handleFloatingBack() {
+            if (currentView === 'sectionContent') {
+                backToSections();
+            } else if (currentView === 'serviceSections') {
+                backToServices();
+            }
         }
 
         function useDefaultServiceResponse(service) {
