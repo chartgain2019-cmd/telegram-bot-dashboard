@@ -25,9 +25,43 @@
             0%, 100% { opacity: 0.5; }
             50% { opacity: 1; }
         }
+        .service-card {
+            transition: all 0.3s ease;
+        }
+        .service-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .service-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e5e7eb;
+        }
+        .service-content a {
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .service-content a:hover {
+            transform: translateY(-1px);
+        }
+        .file-link {
+            transition: all 0.3s ease;
+        }
+        .file-link:hover {
+            background-color: #f0f9ff;
+            transform: scale(1.02);
+        }
+        .back-button {
+            transition: all 0.3s ease;
+        }
+        .back-button:hover {
+            transform: translateX(-5px);
+        }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-full">
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
     <!-- Header -->
     <div class="bg-blue-600 text-white p-4 shadow-lg">
         <div class="flex items-center justify-between max-w-md mx-auto">
@@ -37,7 +71,7 @@
                 </div>
                 <div>
                     <h1 class="font-bold text-lg">بوت خدمة أولياء الأمور</h1>
-                    <p class="text-blue-200 text-sm" id="connectionStatus">متصل الآن</p>
+                    <p class="text-blue-200 text-sm" id="connectionStatus">جاري الاتصال...</p>
                 </div>
             </div>
             <div class="text-blue-200">
@@ -49,14 +83,14 @@
     </div>
 
     <!-- Chat Container -->
-    <div class="max-w-md mx-auto bg-white shadow-xl min-h-full flex flex-col">
+    <div class="max-w-md mx-auto bg-white shadow-xl min-h-screen flex flex-col" style="height: 100vh;">
         <!-- Messages Area -->
-        <div id="messagesArea" class="flex-1 p-4 space-y-4 overflow-y-auto" style="height: 60%;">
+        <div id="messagesArea" class="flex-1 p-4 space-y-4 overflow-y-auto">
             <!-- Welcome Message -->
             <div class="message-bubble">
-                <div class="bg-gray-100 rounded-lg p-3 max-w-xs">
+                <div class="bg-gray-100 rounded-lg p-3">
                     <p class="text-gray-800">مرحباً بك في بوت خدمة أولياء الأمور! 👋</p>
-                    <p class="text-gray-600 text-sm mt-1">جاري تحميل البيانات...</p>
+                    <p class="text-gray-600 text-sm mt-1">جاري تحميل الخدمات المتاحة...</p>
                 </div>
             </div>
         </div>
@@ -71,6 +105,11 @@
         <!-- Services Container -->
         <div id="servicesContainer" class="p-4 hidden">
             <!-- Services will be added here dynamically -->
+        </div>
+
+        <!-- Service Content Container -->
+        <div id="serviceContentContainer" class="flex-1 p-4 hidden overflow-y-auto">
+            <!-- Service content will be displayed here -->
         </div>
 
         <!-- Input Area -->
@@ -96,10 +135,14 @@
     </div>
 
     <script>
-        let currentStudent = null;
-        let botData = null;
-        const API_URL = '/api/data';
+        // 🔥 التعديل: استخدام نفس API لوحة التحكم
+        const API_BASE = window.location.origin;
+        const API_URL = `${API_BASE}/api/data`;
         
+        let currentService = null;
+        let botData = null;
+        let currentView = 'services'; // 'services' or 'serviceContent'
+
         // Initialize Telegram Web App
         if (window.Telegram && Telegram.WebApp) {
             Telegram.WebApp.ready();
@@ -148,14 +191,20 @@
 
         function displayServices() {
             const servicesContainer = document.getElementById('servicesContainer');
+            const serviceContentContainer = document.getElementById('serviceContentContainer');
+            const messagesArea = document.getElementById('messagesArea');
+            
             servicesContainer.innerHTML = '';
             servicesContainer.classList.remove('hidden');
+            serviceContentContainer.classList.add('hidden');
+            messagesArea.classList.remove('hidden');
+            currentView = 'services';
 
             let servicesHtml = `
                 <div class="message-bubble">
                     <div class="bg-gray-100 rounded-lg p-3">
-                        <p class="text-gray-800 mb-3">اختر الخدمة المطلوبة:</p>
-                        <div class="grid grid-cols-2 gap-2">
+                        <p class="text-gray-800 mb-3 font-medium">اختر الخدمة المطلوبة:</p>
+                        <div class="grid grid-cols-2 gap-3">
             `;
 
             const serviceButtons = {
@@ -174,8 +223,12 @@
                 const serviceName = service ? service.name : buttonInfo.text;
                 
                 servicesHtml += `
-                    <button onclick="selectService('${serviceKey}')" class="${buttonInfo.color} text-white p-2 rounded-lg text-sm transition-colors">
-                        ${serviceName}
+                    <button onclick="selectService('${serviceKey}')" 
+                            class="service-card ${buttonInfo.color} text-white p-3 rounded-lg text-sm transition-all duration-200 transform hover:scale-105 shadow-md">
+                        <div class="flex flex-col items-center justify-center h-16">
+                            <span class="text-lg mb-1">${serviceName.split(' ')[0]}</span>
+                            <span class="text-xs opacity-90">${serviceName.split(' ').slice(1).join(' ')}</span>
+                        </div>
                     </button>
                 `;
             }
@@ -187,82 +240,238 @@
             `;
 
             servicesContainer.innerHTML = servicesHtml;
+            addMessage('اختر الخدمة التي تريدها من القائمة أعلاه 👆', false);
         }
 
-        async function selectService(service) {
-            const serviceInfo = botData.services[service];
-            addMessage(serviceInfo.name, true);
+        async function selectService(serviceKey) {
+            const serviceInfo = botData.services[serviceKey];
+            addMessage(`أنت تختار: ${serviceInfo.name}`, true);
             
             showLoading(true);
             
             try {
+                // 🔥 جلب البيانات الحقيقية من الخادم
                 const response = await fetch(API_URL);
                 if (!response.ok) throw new Error('فشل في جلب البيانات');
                 
-                const data = await response.json();
-                const serviceData = data.services[service];
+                const freshData = await response.json();
+                const serviceData = freshData.services[serviceKey];
                 
                 showLoading(false);
                 
                 if (serviceData && serviceData.sections && serviceData.sections.length > 0) {
-                    let responseText = `**${serviceData.name}**\n\n`;
-                    
-                    serviceData.sections.forEach(section => {
-                        responseText += `📂 **${section.name}**\n`;
-                        if (section.description && section.description !== 'لا يوجد وصف') {
-                            responseText += `${section.description}\n`;
-                        }
-                        
-                        if (section.content && section.content.length > 0) {
-                            section.content.forEach(item => {
-                                if (item.type === 'text') {
-                                    responseText += `\n📄 ${item.content}\n`;
-                                } else if (item.type === 'file') {
-                                    responseText += `\n📎 ${item.name}`;
-                                    if (item.fileUrl) {
-                                        responseText += `\n🔗 ${window.location.origin}${item.fileUrl}\n`;
-                                    }
-                                } else if (item.type === 'link') {
-                                    responseText += `\n🔗 ${item.title}\n${item.url}\n`;
-                                } else if (item.type === 'image') {
-                                    responseText += `\n🖼️ ${item.title}`;
-                                    if (item.fileUrl) {
-                                        responseText += `\n🔗 ${window.location.origin}${item.fileUrl}\n`;
-                                    }
-                                } else if (item.type === 'pdf') {
-                                    responseText += `\n📄 ${item.title}`;
-                                    if (item.fileUrl) {
-                                        responseText += `\n🔗 ${window.location.origin}${item.fileUrl}\n`;
-                                    }
-                                }
-                            });
-                        } else {
-                            responseText += `\n⚠️ لا يوجد محتوى في هذا القسم\n`;
-                        }
-                        responseText += `\n────────────\n`;
-                    });
-                    
-                    addMessage(responseText || 'لا توجد بيانات متاحة حالياً', false);
+                    displayServiceContent(serviceKey, serviceData);
                 } else {
-                    useDefaultServiceResponse(service);
+                    useDefaultServiceResponse(serviceKey);
                 }
                 
             } catch (error) {
+                console.error('Error:', error);
                 showLoading(false);
-                useDefaultServiceResponse(service);
+                useDefaultServiceResponse(serviceKey);
             }
+        }
+
+        function displayServiceContent(serviceKey, serviceData) {
+            const servicesContainer = document.getElementById('servicesContainer');
+            const serviceContentContainer = document.getElementById('serviceContentContainer');
+            const messagesArea = document.getElementById('messagesArea');
+            
+            servicesContainer.classList.add('hidden');
+            serviceContentContainer.classList.remove('hidden');
+            messagesArea.classList.add('hidden');
+            serviceContentContainer.innerHTML = '';
+            currentView = 'serviceContent';
+
+            let contentHtml = `
+                <div class="service-content space-y-4">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold text-blue-900">${serviceData.name}</h3>
+                            <button onclick="backToServices()" class="back-button bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 space-x-reverse">
+                                <span>↩</span>
+                                <span>رجوع للخدمات</span>
+                            </button>
+                        </div>
+            `;
+
+            if (serviceData.sections.length === 0) {
+                contentHtml += `
+                    <div class="text-center py-8">
+                        <div class="text-4xl mb-2">📋</div>
+                        <p class="text-blue-800 text-lg">لا توجد بيانات متاحة حالياً</p>
+                        <p class="text-blue-600 text-sm mt-2">سيتم إضافة المحتوى قريباً من قبل الإدارة</p>
+                    </div>
+                `;
+            } else {
+                serviceData.sections.forEach((section, sectionIndex) => {
+                    contentHtml += `
+                        <div class="bg-white rounded-lg p-4 border border-gray-200">
+                            <h4 class="font-bold text-gray-800 text-lg mb-2">${section.name}</h4>
+                            ${section.description && section.description !== 'لا يوجد وصف' ? 
+                                `<p class="text-gray-600 text-sm mb-4">${section.description}</p>` : ''}
+                    `;
+
+                    if (section.content && section.content.length > 0) {
+                        contentHtml += `<div class="space-y-4">`;
+                        
+                        section.content.forEach((item, itemIndex) => {
+                            if (item.type === 'text') {
+                                contentHtml += `
+                                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                        <div class="flex items-start space-x-3 space-x-reverse">
+                                            <span class="text-gray-500 text-xl mt-1">📄</span>
+                                            <div class="flex-1">
+                                                ${item.title ? `<h5 class="font-semibold text-gray-800 mb-2 text-lg">${item.title}</h5>` : ''}
+                                                <p class="text-gray-700 whitespace-pre-line leading-relaxed">${item.content}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            } 
+                            else if (item.type === 'file') {
+                                const fileUrl = item.fileUrl ? `${API_BASE}${item.fileUrl}` : null;
+                                contentHtml += `
+                                    <div class="file-link bg-green-50 p-4 rounded-lg border border-green-200">
+                                        <div class="flex items-start space-x-3 space-x-reverse">
+                                            <span class="text-green-600 text-xl mt-1">📎</span>
+                                            <div class="flex-1">
+                                                <h5 class="font-semibold text-green-800 mb-2 text-lg">${item.name}</h5>
+                                                <p class="text-green-700 text-sm mb-3">${item.description || 'ملف مرفوع'}</p>
+                                                ${fileUrl ? `
+                                                    <div class="flex space-x-2 space-x-reverse">
+                                                        <a href="${fileUrl}" target="_blank" 
+                                                           class="inline-flex items-center bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-colors shadow-md">
+                                                            📥 تحميل الملف
+                                                        </a>
+                                                        ${item.size ? `<span class="text-green-600 text-sm bg-green-100 px-3 py-2 rounded">${item.size}</span>` : ''}
+                                                    </div>
+                                                ` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                            else if (item.type === 'image') {
+                                const imageUrl = item.fileUrl ? `${API_BASE}${item.fileUrl}` : null;
+                                contentHtml += `
+                                    <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                                        <div class="flex items-start space-x-3 space-x-reverse">
+                                            <span class="text-yellow-600 text-xl mt-1">🖼️</span>
+                                            <div class="flex-1">
+                                                <h5 class="font-semibold text-yellow-800 mb-3 text-lg">${item.title}</h5>
+                                                ${imageUrl ? `
+                                                    <div class="mb-3 text-center">
+                                                        <img src="${imageUrl}" alt="${item.description || 'صورة'}" 
+                                                             class="rounded-lg max-w-full h-auto max-h-80 object-contain mx-auto border-2 border-yellow-300 shadow-lg">
+                                                    </div>
+                                                ` : ''}
+                                                <p class="text-yellow-700 text-sm mb-3">${item.description || 'صورة مرفوعة'}</p>
+                                                ${imageUrl ? `
+                                                    <div class="flex space-x-2 space-x-reverse">
+                                                        <a href="${imageUrl}" target="_blank" 
+                                                           class="inline-flex items-center bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm transition-colors shadow-md">
+                                                            👁️ عرض بحجم كامل
+                                                        </a>
+                                                        ${item.size ? `<span class="text-yellow-600 text-sm bg-yellow-100 px-3 py-2 rounded">${item.size}</span>` : ''}
+                                                    </div>
+                                                ` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                            else if (item.type === 'pdf') {
+                                const pdfUrl = item.fileUrl ? `${API_BASE}${item.fileUrl}` : null;
+                                contentHtml += `
+                                    <div class="bg-red-50 p-4 rounded-lg border border-red-200">
+                                        <div class="flex items-start space-x-3 space-x-reverse">
+                                            <span class="text-red-600 text-xl mt-1">📄</span>
+                                            <div class="flex-1">
+                                                <h5 class="font-semibold text-red-800 mb-2 text-lg">${item.title}</h5>
+                                                <p class="text-red-700 text-sm mb-3">${item.description || 'ملف PDF'}</p>
+                                                ${pdfUrl ? `
+                                                    <div class="flex space-x-2 space-x-reverse">
+                                                        <a href="${pdfUrl}" target="_blank" 
+                                                           class="inline-flex items-center bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition-colors shadow-md">
+                                                            📥 تحميل PDF
+                                                        </a>
+                                                        ${item.size ? `<span class="text-red-600 text-sm bg-red-100 px-3 py-2 rounded">${item.size}</span>` : ''}
+                                                    </div>
+                                                ` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                            else if (item.type === 'link') {
+                                contentHtml += `
+                                    <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                                        <div class="flex items-start space-x-3 space-x-reverse">
+                                            <span class="text-purple-600 text-xl mt-1">🔗</span>
+                                            <div class="flex-1">
+                                                <h5 class="font-semibold text-purple-800 mb-2 text-lg">${item.title}</h5>
+                                                <p class="text-purple-700 text-sm mb-3">${item.description || 'رابط خارجي'}</p>
+                                                <div class="flex space-x-2 space-x-reverse">
+                                                    <a href="${item.url}" target="_blank" 
+                                                       class="inline-flex items-center bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm transition-colors shadow-md">
+                                                        🌐 زيارة الرابط
+                                                    </a>
+                                                    <span class="text-purple-600 text-sm bg-purple-100 px-3 py-2 rounded break-all max-w-xs">
+                                                        ${item.url}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        });
+                        
+                        contentHtml += `</div>`;
+                    } else {
+                        contentHtml += `
+                            <div class="text-center py-6 bg-gray-50 rounded-lg">
+                                <div class="text-3xl mb-2">📭</div>
+                                <p class="text-gray-500 text-sm">لا يوجد محتوى في هذا القسم بعد.</p>
+                            </div>
+                        `;
+                    }
+                    
+                    contentHtml += `</div>`;
+                });
+            }
+
+            contentHtml += `</div></div>`;
+            serviceContentContainer.innerHTML = contentHtml;
+            
+            // Scroll to top of content
+            serviceContentContainer.scrollTop = 0;
+        }
+
+        function backToServices() {
+            const servicesContainer = document.getElementById('servicesContainer');
+            const serviceContentContainer = document.getElementById('serviceContentContainer');
+            const messagesArea = document.getElementById('messagesArea');
+            
+            servicesContainer.classList.remove('hidden');
+            serviceContentContainer.classList.add('hidden');
+            messagesArea.classList.remove('hidden');
+            currentView = 'services';
+            
+            addMessage('اختر خدمة أخرى إذا أردت 👆', false);
         }
 
         function useDefaultServiceResponse(service) {
             const defaultResponses = {
-                'schedule': 'إليك الجدول الدراسي لهذا الأسبوع:\n\n📚 الأحد: رياضيات، عربي، علوم\n📚 الاثنين: إنجليزي، تاريخ، رياضة\n📚 الثلاثاء: علوم، جغرافيا، فنون\n📚 الأربعاء: رياضيات، إنجليزي، تربية إسلامية\n📚 الخميس: علوم، عربي، أنشطة',
-                'homework': 'الواجبات المطلوبة:\n\n📝 رياضيات: حل التمارين ص 45-47\n📝 العربي: كتابة موضوع تعبير\n📝 العلوم: قراءة الفصل الثالث\n📝 الإنجليزي: حفظ المفردات الجديدة\n\n📅 موعد التسليم: غداً',
-                'ai': '🤖 مرحباً! أنا مساعدك الذكي\n\nيمكنني مساعدتك في:\n• الإجابة على الأسئلة التعليمية\n• شرح المفاهيم الصعبة\n• مساعدة في حل الواجبات\n• تقديم نصائح دراسية\n\nما الذي تريد أن تسأل عنه؟',
-                'broadcast': '📢 آخر الإعلانات والأخبار:\n\n🔔 تذكير: اختبار الرياضيات يوم الأربعاء\n🔔 إجازة نصف العام تبدأ 15 فبراير\n🔔 اجتماع أولياء الأمور يوم الخميس\n🔔 تم تأجيل رحلة الصف السادس\n\n📅 آخر تحديث: اليوم 2:30 م',
-                'programs': '🏆 البرامج والمسابقات الحالية:\n\n🎯 مسابقة القرآن الكريم - التسجيل مفتوح\n🎯 برنامج المواهب الطلابية - 20 فبراير\n🎯 مسابقة الرياضيات - المرحلة النهائية\n🎯 معرض العلوم السنوي - مارس 2024\n\nللتسجيل أو الاستفسار اضغط /register',
-                'files': '📁 الملفات المتاحة للتحميل:\n\n📄 جدول الاختبارات النهائية.pdf\n📄 قائمة الكتب المطلوبة.pdf\n📄 نموذج طلب إجازة.pdf\n📄 دليل ولي الأمر.pdf\n📄 التقويم الدراسي 2024.pdf\n\nلتحميل أي ملف، اكتب اسمه في الرسالة',
-                'exams': '📋 جدول الاختبارات القادمة:\n\n📝 الرياضيات: الأربعاء 10 فبراير - 8:00 ص\n📝 اللغة العربية: الخميس 11 فبراير - 8:00 ص\n📝 العلوم: الأحد 14 فبراير - 8:00 ص\n📝 الإنجليزي: الاثنين 15 فبراير - 8:00 ص\n\n⏰ مدة كل اختبار: ساعتان',
-                'contact': '📞 معلومات التواصل:\n\n📱 الهاتف: 011-234-5678\n📧 البريد: info@school.edu.sa\n🌐 الموقع: www.school.edu.sa\n📍 العنوان: شارع التعليم، الرياض\n\n🕐 ساعات العمل:\nالأحد - الخميس: 7:00 ص - 2:00 م\n\nيمكنك أيضاً حجز موعد مع الإدارة'
+                'schedule': '📅 **الجدول الدراسي**\n\nحالياً لا توجد بيانات للجدول الدراسي.\nسيتم تحديث الجدول قريباً من قبل الإدارة.',
+                'homework': '📝 **الواجبات المنزلية**\n\nلا توجد واجبات منزلية محددة حالياً.\nسيتم إضافة الواجبات عند توفرها.',
+                'ai': '🤖 **ربوت الذكاء الاصطناعي**\n\nمرحباً! أنا مساعدك الذكي.\n\nيمكنني مساعدتك في:\n• الإجابة على الأسئلة التعليمية\n• شرح المفاهيم الصعبة\n• مساعدة في حل الواجبات\n• تقديم نصائح دراسية\n\nما الذي تريد أن تسأل عنه؟',
+                'broadcast': '📢 **الإعلانات والبروكاست**\n\nلا توجد إعلانات حالياً.\nسيتم نشر الإعلانات الهامة هنا عند توفرها.',
+                'programs': '🏆 **البرامج والمسابقات**\n\nلا توجد برامج أو مسابقات نشطة حالياً.\nسيتم الإعلان عن البرامج القادمة قريباً.',
+                'files': '📁 **الملفات المرسلة**\n\nلا توجد ملفات متاحة للتحميل حالياً.\nسيتم رفع الملفات المهمة هنا عند توفرها.',
+                'exams': '📋 **الاختبارات**\n\nلا توجد اختبارات قادمة محددة حالياً.\nسيتم نشر جدول الاختبارات عند اعتماده.',
+                'contact': '📞 **تواصل معنا**\n\n**معلومات التواصل:**\n\n📱 الهاتف: 011-234-5678\n📧 البريد: info@school.edu.sa\n🌐 الموقع: www.school.edu.sa\n📍 العنوان: شارع التعليم، الرياض\n\n🕐 ساعات العمل:\nالأحد - الخميس: 7:00 ص - 2:00 م'
             };
             
             addMessage(defaultResponses[service] || 'الخدمة غير متاحة حالياً', false);
@@ -270,7 +479,10 @@
 
         function showLoading(show) {
             document.getElementById('loadingIndicator').classList.toggle('hidden', !show);
-            document.getElementById('servicesContainer').classList.toggle('hidden', show);
+            if (show) {
+                document.getElementById('servicesContainer').classList.add('hidden');
+                document.getElementById('serviceContentContainer').classList.add('hidden');
+            }
         }
 
         function updateStatus(status) {
@@ -286,14 +498,16 @@
                 messageDiv.innerHTML = `
                     <div class="flex justify-end">
                         <div class="bg-blue-500 text-white rounded-lg p-3 max-w-xs">
-                            <p>${text}</p>
+                            <p class="whitespace-pre-line">${text}</p>
                         </div>
                     </div>
                 `;
             } else {
                 messageDiv.innerHTML = `
-                    <div class="bg-gray-100 rounded-lg p-3 max-w-xs">
-                        <p class="text-gray-800 whitespace-pre-line">${text}</p>
+                    <div class="flex justify-start">
+                        <div class="bg-gray-100 rounded-lg p-3 max-w-xs">
+                            <p class="text-gray-800 whitespace-pre-line">${text}</p>
+                        </div>
                     </div>
                 `;
             }
@@ -310,15 +524,27 @@
                 addMessage(message, true);
                 input.value = '';
                 
+                // رد ذكي بناءً على المحتوى
                 setTimeout(() => {
-                    const responses = [
-                        'شكراً لك على رسالتك. سأقوم بمراجعة طلبك والرد عليك قريباً.',
-                        'تم استلام رسالتك بنجاح. هل تحتاج لمساعدة إضافية؟',
-                        'أشكرك على التواصل معنا. سيتم الرد على استفسارك في أقرب وقت.',
-                        'رسالتك مهمة بالنسبة لنا. سنتواصل معك خلال 24 ساعة.'
-                    ];
-                    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-                    addMessage(randomResponse, false);
+                    let response = '';
+                    
+                    if (message.includes('شكر') || message.includes('thanks') || message.includes('thank')) {
+                        response = 'العفو! 😊 نحن هنا لخدمتك. هل تحتاج مساعدة في شيء آخر؟';
+                    } else if (message.includes('مرحب') || message.includes('hello') || message.includes('hi')) {
+                        response = 'مرحباً بك! 👋 اختر الخدمة التي تريدها من القائمة أعلاه.';
+                    } else if (message.includes('مساعدة') || message.includes('help') || message.includes('مساعده')) {
+                        response = 'يمكنني مساعدتك في:\n• الاطلاع على الجدول الدراسي 📅\n• معرفة الواجبات 📝\n• تحميل الملفات 📁\n• معرفة الاختبارات 📋\n• وغيرها من الخدمات!\n\nاختر الخدمة المناسبة من الأعلى.';
+                    } else {
+                        const responses = [
+                            'شكراً لك على رسالتك. يمكنني مساعدتك من خلال الخدمات المتاحة أعلاه. 📚',
+                            'هل تحتاج مساعدة في خدمة معينة؟ اختر من القائمة أعلى الصفحة. 👆',
+                            'رسالتك مهمة بالنسبة لنا. يمكنك استخدام الخدمات المتاحة للحصول على المعلومات المطلوبة. 📋',
+                            'أشكرك على التواصل! اختر الخدمة التي تريدها من القائمة لأعلى. 🎯'
+                        ];
+                        response = responses[Math.floor(Math.random() * responses.length)];
+                    }
+                    
+                    addMessage(response, false);
                 }, 1000);
             }
         }
@@ -332,6 +558,13 @@
         // Load data when page loads
         document.addEventListener('DOMContentLoaded', function() {
             loadData();
+            
+            // إضافة رسالة ترحيب إضافية بعد تحميل البيانات
+            setTimeout(() => {
+                if (currentView === 'services') {
+                    addMessage('يمكنك اختيار أي خدمة من القائمة أعلاه للحصول على المعلومات المطلوبة. 📚', false);
+                }
+            }, 2000);
         });
     </script>
 </body>
