@@ -10,7 +10,6 @@
     <script src='https://cdn.jotfor.ms/agent/embedjs/019932f8eeb67de397162a0d8c2d541451fe/embed.js'></script>
     <style>
         body {
-            box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
@@ -21,18 +20,24 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .typing-indicator {
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 1; }
-        }
-        .file-item {
+        .service-card {
             transition: all 0.3s ease;
+            border-radius: 10px;
         }
-        .file-item:hover {
-            transform: translateX(-5px);
+        .service-card:hover {
+            transform: translateY(-3px);
+        }
+        .chat-container {
+            height: calc(100vh - 80px);
+            border-radius: 20px 20px 0 0;
+        }
+        #jotform-chat-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            width: 300px;
+            height: 500px;
         }
         .typing-dots {
             display: flex;
@@ -51,42 +56,23 @@
             0%, 80%, 100% { transform: scale(0); }
             40% { transform: scale(1); }
         }
-        .service-card {
+        .file-item {
             transition: all 0.3s ease;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        .service-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+        .file-item:hover {
+            transform: translateX(-5px);
         }
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        #imageModal {
+            display: none;
         }
-        .chat-container {
-            height: calc(100vh - 80px);
-            border-radius: 20px 20px 0 0;
-            box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.1);
-        }
-        @media (max-width: 640px) {
-            .chat-container {
-                height: calc(100vh - 60px);
-                border-radius: 15px 15px 0 0;
-            }
-        }
-        
-        /* JotForm Chat Bot Container */
-        #jotform-chat-container {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            z-index: 1000;
+        #imageModal.show {
+            display: flex;
         }
     </style>
 </head>
 <body class="min-h-screen">
     <!-- Header -->
-    <div class="gradient-bg text-white p-4 shadow-lg">
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 shadow-lg">
         <div class="flex items-center justify-between max-w-md mx-auto">
             <div class="flex items-center space-x-3 space-x-reverse">
                 <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow">
@@ -94,13 +80,8 @@
                 </div>
                 <div>
                     <h1 class="font-bold text-lg">بوت خدمة أولياء الأمور</h1>
-                    <p class="text-blue-100 text-sm" id="connectionStatus">جاري التحميل...</p>
+                    <p class="text-blue-100 text-sm" id="connectionStatus">✅ متصل</p>
                 </div>
-            </div>
-            <div class="text-blue-100 bg-white/20 p-2 rounded-full">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
-                </svg>
             </div>
         </div>
     </div>
@@ -108,13 +89,13 @@
     <!-- Chat Container -->
     <div class="max-w-md mx-auto bg-white chat-container flex flex-col">
         <!-- Navigation Header -->
-        <div id="navigationHeader" class="bg-gradient-to-r from-blue-50 to-purple-50 p-3 border-b flex items-center justify-between hidden shadow-sm">
+        <div id="navigationHeader" class="bg-blue-50 p-3 border-b flex items-center justify-between hidden">
             <div class="flex space-x-2 space-x-reverse">
                 <button id="backToServices" onclick="showMainServices()" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-xs font-medium transition-colors shadow hidden">
-                    ← الخدمات
+                    ← العودة للخدمات
                 </button>
                 <button id="backToSections" onclick="showServiceSections(currentService)" class="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded-lg text-xs font-medium transition-colors shadow hidden">
-                    ← الأقسام
+                    ← العودة للأقسام
                 </button>
             </div>
             <span id="currentLevel" class="text-gray-700 font-medium text-xs bg-white/80 px-2 py-1 rounded-full"></span>
@@ -122,9 +103,8 @@
 
         <!-- Messages Area -->
         <div id="messagesArea" class="flex-1 p-3 space-y-3 overflow-y-auto bg-gray-50">
-            <!-- Welcome Message -->
             <div class="message-bubble">
-                <div class="bg-gradient-to-r from-blue-100 to-purple-100 rounded-xl p-3 max-w-xs border border-blue-200">
+                <div class="bg-blue-100 rounded-xl p-3 max-w-xs border border-blue-200">
                     <div class="flex items-center space-x-2 space-x-reverse mb-1">
                         <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
                             <span class="text-white text-xs">🤖</span>
@@ -132,13 +112,13 @@
                         <span class="text-blue-700 text-xs font-bold">مساعد المدرسة</span>
                     </div>
                     <p class="text-gray-800 text-sm font-medium">مرحباً بك في بوت خدمة أولياء الأمور! 👋</p>
-                    <p class="text-gray-600 text-xs mt-1">اختر الخدمة المطلوبة من الأسفل أو اكتب سؤالك.</p>
+                    <p class="text-gray-600 text-xs mt-1">اختر الخدمة المطلوبة من الأسفل.</p>
                 </div>
             </div>
         </div>
 
         <!-- Loading Indicator -->
-        <div id="loadingIndicator" class="flex justify-center p-3 bg-gray-50">
+        <div id="loadingIndicator" class="flex justify-center p-3 bg-gray-50 hidden">
             <div class="bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg p-3 shadow w-full max-w-xs">
                 <div class="flex items-center justify-center space-x-2 space-x-reverse">
                     <div class="typing-dots">
@@ -146,39 +126,43 @@
                         <span class="bg-white"></span>
                         <span class="bg-white"></span>
                     </div>
-                    <p class="font-medium text-sm">🔄 جاري تحميل الخدمات...</p>
+                    <p class="font-medium text-sm">جاري التحميل...</p>
                 </div>
             </div>
         </div>
 
         <!-- Services Container -->
-        <div id="servicesContainer" class="p-3 bg-gray-50 hidden">
-            <!-- Services will be added here dynamically -->
+        <div id="servicesContainer" class="p-3 bg-gray-50">
+            <div class="message-bubble">
+                <div class="bg-blue-100 rounded-xl p-3 border border-blue-200">
+                    <p class="text-gray-800 font-bold mb-2 text-sm">🚀 اختر الخدمة المطلوبة:</p>
+                    <div class="grid grid-cols-2 gap-2" id="servicesGrid">
+                        <!-- الأزرار سيتم إضافتها هنا -->
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Sections Container -->
         <div id="sectionsContainer" class="p-3 bg-gray-50 hidden">
-            <!-- Sections will be added here dynamically -->
+            <!-- الأقسام سيتم إضافتها هنا -->
         </div>
 
         <!-- Content Container -->
         <div id="contentContainer" class="p-3 bg-gray-50 hidden">
-            <!-- Content will be added here dynamically -->
+            <!-- المحتوى سيتم إضافته هنا -->
         </div>
 
         <!-- Input Area -->
-        <div class="border-t bg-white p-3 shadow-inner">
+        <div class="border-t bg-white p-3">
             <div class="flex items-center space-x-2 space-x-reverse">
                 <input 
                     type="text" 
                     id="messageInput" 
-                    placeholder="اكتب رسالتك هنا..."
-                    class="flex-1 border border-gray-300 rounded-full px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 transition-all"
+                    placeholder="اكتب سؤالك هنا..."
+                    class="flex-1 border border-gray-300 rounded-full px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                 >
-                <button 
-                    onclick="sendMessage()" 
-                    class="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-full p-2 transition-all shadow"
-                >
+                <button onclick="sendMessage()" class="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2 transition-all shadow">
                     <svg class="w-4 h-4 transform rotate-180" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>
                     </svg>
@@ -190,335 +174,191 @@
     <!-- JotForm Chat Container -->
     <div id="jotform-chat-container"></div>
 
+    <!-- Image Modal -->
+    <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-4 max-w-3xl max-h-3xl mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-gray-800">معاينة الصورة</h3>
+                <button onclick="closeImageModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <img id="modalImage" src="" alt="معاينة الصورة" class="max-w-full max-h-96 object-contain rounded">
+            <div class="mt-4 flex justify-center space-x-2 space-x-reverse">
+                <button onclick="downloadCurrentImage()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">
+                    📥 تحميل الصورة
+                </button>
+                <button onclick="closeImageModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors">
+                    إغلاق
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // المتغيرات العامة
-        let currentStudent = null;
-        let botData = null;
+        // البيانات الكاملة مع التسلسل الهرمي
+        const botData = {
+            services: {
+                'schedule': { 
+                    name: 'الجدول الدراسي', 
+                    icon: '📅',
+                    sections: [
+                        { 
+                            name: 'الصف الأول', 
+                            description: 'الجدول الأسبوعي للصف الأول',
+                            content: [
+                                { type: 'text', content: '📅 **الجدول الدراسي للصف الأول**\n\n**الأحد:**\n• رياضيات (8:00 - 9:00)\n• عربي (9:00 - 10:00)\n• علوم (10:30 - 11:30)\n\n**الاثنين:**\n• إنجليزي (8:00 - 9:00)\n• تاريخ (9:00 - 10:00)\n• رياضة (10:30 - 11:30)' },
+                                { type: 'pdf', title: 'جدول الحصص', fileUrl: '/files/schedule1.pdf' }
+                            ]
+                        },
+                        { 
+                            name: 'الصف الثاني', 
+                            description: 'الجدول الأسبوعي للصف الثاني',
+                            content: [
+                                { type: 'text', content: '📅 **الجدول الدراسي للصف الثاني**\n\n**الأحد:**\n• علوم (8:00 - 9:00)\n• عربي (9:00 - 10:00)\n• رياضيات (10:30 - 11:30)\n\n**الاثنين:**\n• إنجليزي (8:00 - 9:00)\n• تربية إسلامية (9:00 - 10:00)\n• رياضة (10:30 - 11:30)' }
+                            ]
+                        },
+                        { 
+                            name: 'الصف الثالث', 
+                            description: 'الجدول الأسبوعي للصف الثالث',
+                            content: [
+                                { type: 'text', content: '📅 **الجدول الدراسي للصف الثالث**\n\n**الأحد:**\n• إنجليزي (8:00 - 9:00)\n• رياضيات (9:00 - 10:00)\n• علوم (10:30 - 11:30)\n\n**الاثنين:**\n• عربي (8:00 - 9:00)\n• تربية إسلامية (9:00 - 10:00)\n• رياضة (10:30 - 11:30)' }
+                            ]
+                        }
+                    ] 
+                },
+                'homework': { 
+                    name: 'الواجبات المنزلية', 
+                    icon: '📝',
+                    sections: [
+                        { 
+                            name: 'الصف الأول', 
+                            description: 'الواجبات المطلوبة للصف الأول',
+                            content: [
+                                { type: 'text', content: '📝 **واجبات الصف الأول**\n\n**الرياضيات:**\n• حل التمارين من صفحة 45 إلى 47\n• حفظ جدول الضرب للعدد 2\n\n**اللغة العربية:**\n• كتابة موضوع تعبير عن "المدرسة"\n• قراءة القصة من صفحة 23\n\n⏰ **موعد التسليم:** غداً' }
+                            ]
+                        },
+                        { 
+                            name: 'الصف الثاني', 
+                            description: 'الواجبات المطلوبة للصف الثاني',
+                            content: [
+                                { type: 'text', content: '📝 **واجبات الصف الثاني**\n\n**الرياضيات:**\n• حل المسائل من صفحة 32 إلى 35\n• مراجعة درس الكسور\n\n**اللغة العربية:**\n• إملاء الفقرة الأولى من الدرس\n• كتابة 10 أسطر عن النظافة\n\n⏰ **موعد التسليم:** بعد غد' }
+                            ]
+                        }
+                    ] 
+                },
+                'ai': { 
+                    name: 'المساعد الذكي', 
+                    icon: '🤖',
+                    sections: [] 
+                },
+                'broadcast': { 
+                    name: 'البروكاست', 
+                    icon: '📢',
+                    sections: [] 
+                },
+                'programs': { 
+                    name: 'البرامج والمسابقات', 
+                    icon: '🏆',
+                    sections: [
+                        { 
+                            name: 'المسابقات', 
+                            description: 'المسابقات الحالية',
+                            content: [
+                                { type: 'text', content: '🏆 **المسابقات الحالية**\n\n🎯 **مسابقة القرآن الكريم**\n• التسجيل مفتوح حتى 20 فبراير\n• للمراحل من الثالث إلى السادس\n\n🎯 **مسابقة الرياضيات**\n• المرحلة النهائية 25 فبراير\n\n🎯 **برنامج المواهب الطلابية**\n• يبدأ 20 فبراير\n• يشمل الرسم، الخطابة، والأنشطة الفنية' }
+                            ]
+                        }
+                    ] 
+                },
+                'files': { 
+                    name: 'الملفات المرسلة', 
+                    icon: '📁',
+                    sections: [
+                        { 
+                            name: 'ملفات الصف الأول', 
+                            description: 'جميع الملفات المرسلة للصف الأول',
+                            content: [
+                                { type: 'pdf', title: 'جدول الاختبارات النهائية', fileUrl: '/files/exam-schedule.pdf' },
+                                { type: 'pdf', title: 'قائمة الكتب المطلوبة', fileUrl: '/files/books-list.pdf' },
+                                { type: 'image', title: 'صورة الفعاليات', fileUrl: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400' }
+                            ]
+                        },
+                        { 
+                            name: 'ملفات الصف الثاني', 
+                            description: 'جميع الملفات المرسلة للصف الثاني',
+                            content: [
+                                { type: 'pdf', title: 'دليل ولي الأمر', fileUrl: '/files/parent-guide.pdf' },
+                                { type: 'pdf', title: 'التقويم الدراسي 2024', fileUrl: '/files/calendar-2024.pdf' }
+                            ]
+                        }
+                    ] 
+                },
+                'exams': { 
+                    name: 'الاختبارات', 
+                    icon: '📋',
+                    sections: [] 
+                },
+                'contact': { 
+                    name: 'تواصل معنا', 
+                    icon: '📞',
+                    sections: [] 
+                }
+            }
+        };
+
         let currentService = null;
         let currentSection = null;
-        let isAIActive = false;
-        
-        // إعدادات API
-        const API_URL = '/api/data';
-        const GEMINI_API_KEY = 'AIzaSyAVpqpWWrcvzXrheTIhAKRDSRYonuN0weU';
-        
-        // تهيئة تطبيق Telegram
-        if (window.Telegram && Telegram.WebApp) {
-            Telegram.WebApp.ready();
-            Telegram.WebApp.expand();
-        }
+        let currentImageUrl = null;
 
-        // التحقق من صحة مفتاح API
-        async function validateAPIKey() {
-            try {
-                updateStatus('🔍 جاري التحقق من الاتصال...');
-                
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: "test" }] }]
-                    })
-                });
-                
-                if (response.status === 200 || response.status === 400) {
-                    console.log('✅ API Key is valid and active');
-                    isAIActive = true;
-                    updateStatus('✅ متصل - الذكاء الاصطناعي نشط');
-                    return true;
-                } else {
-                    throw new Error(`Status: ${response.status}`);
-                }
-            } catch (error) {
-                console.warn('❌ Cannot reach Gemini API, using smart responses');
-                isAIActive = false;
-                updateStatus('⚠️ متصل - استخدام الردود الذكية');
-                return false;
-            }
-        }
-
-        // الحصول على رد من الذكاء الاصطناعي
-        async function getAIResponse(userMessage) {
-            if (!isAIActive) {
-                return getSmartResponse(userMessage);
-            }
-
-            try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [{
-                                text: `أنت مساعد بوت مدرسي ذكي لأولياء الأمور. 
-
-                                معلومات المدرسة:
-                                - المدرسة: مدرسة النموذج الابتدائية
-                                - الخدمات: جدول دراسي، واجبات، اختبارات، ملفات، برامج
-                                - المستخدم: ولي أمر طالب
-
-                                مهمتك:
-                                - الرد على استفسارات أولياء الأمور
-                                - تقديم معلومات عن الخدمات المدرسية
-                                - توجيه المستخدم للقسم المناسب
-                                - الرد بطريقة ودودة ومفيدة
-
-                                استفسار ولي الأمر: "${userMessage}"
-
-                                الرد المناسب:`
-                            }]
-                        }],
-                        generationConfig: {
-                            temperature: 0.7,
-                            topK: 40,
-                            topP: 0.95,
-                            maxOutputTokens: 800,
-                        }
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const data = await response.json();
-                
-                if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-                    return data.candidates[0].content.parts[0].text;
-                } else {
-                    return getSmartResponse(userMessage);
-                }
-                
-            } catch (error) {
-                console.error('Error calling Gemini API:', error);
-                return getSmartResponse(userMessage);
-            }
-        }
-
-        // نظام الردود الذكية
-        function getSmartResponse(userMessage) {
-            const msg = userMessage.toLowerCase().trim();
-            
-            const responseMap = {
-                'جدول': '📅 **الجدول الدراسي**\n\nيمكنك الاطلاع على الجداول الدراسية لجميع الصفوف من قسم "الجدول الدراسي".\n\n• اختر الصف المطلوب\n• الجداول محدثة أسبوعياً\n• تشمل جميع المواد والأنشطة',
-                
-                'واجب': '📝 **الواجبات المنزلية**\n\nالواجبات متاحة في قسم "الواجبات المنزلية" مقسمة حسب:\n\n• الصفوف الدراسية\n• المواد التعليمية\n• مواعيد التسليم\n\nستجد تفاصيل كل واجب وموعد تسليمه.',
-                
-                'اختبار': '📋 **الاختبارات**\n\nمعلومات الاختبارات في قسم "الاختبارات":\n\n• مواعيد الاختبارات\n• المواد المقررة\n• نتائج الاختبارات\n• نماذج الاختبارات',
-                
-                'ملف': '📁 **الملفات المرسلة**\n\nجميع الملفات متاحة للتحميل في قسم "الملفات المرسلة":\n\n• الجداول الزمنية\n• نماذج الطلبات\n• دليل ولي الأمر\n• الكتب المدرسية',
-                
-                'برنامج': '🏆 **البرامج والمسابقات**\n\nالبرامج الحالية في قسم "البرامج والمسابقات":\n\n• مسابقات قرآنية\n• برامج المواهب\n• أنشطة رياضية\n• معارض علمية',
-                
-                'إجازة': '📢 **الإعلانات والإجازات**\n\nآخر الإعلانات في قسم "البروكاست":\n\n• مواعيد الإجازات\n• اجتماعات أولياء الأمور\n• فعاليات المدرسة\n• تنبيهات مهمة',
-                
-                'شكر': '🌹 **شكراً لك!**\n\nسعيد لأنني استطعت مساعدتك. إذا كان لديك أي استفسار آخر، أنا هنا لمساعدتك دائماً.',
-                
-                'default': `🌟 **مرحباً بك!**\n\nسؤالك: "${userMessage}"\n\nيمكنني مساعدتك في:\n\n• 📅 **الجدول الدراسي** - جداول جميع الصفوف\n• 📝 **الواجبات** - الواجبات المنزلية ومواعيدها\n• 📢 **البروكاست** - آخر الإعلانات\n• 🏆 **البرامج** - المسابقات والأنشطة\n• 📁 **الملفات** - جميع الملفات للتحميل\n• 📋 **الاختبارات** - مواعيد ونتائج الاختبارات\n• 🤖 **المساعد الذكي** - للإجابة على أسئلتك\n\nاختر الخدمة المناسبة من القائمة!`
-            };
-
-            for (const [keyword, response] of Object.entries(responseMap)) {
-                if (msg.includes(keyword) && keyword !== 'default') {
-                    return response;
-                }
-            }
-            
-            return responseMap.default;
-        }
-
-        // تحميل البيانات
-        async function loadData() {
-            showLoading(true);
-            
-            try {
-                await validateAPIKey();
-                
-                const response = await fetch(API_URL);
-                if (!response.ok) {
-                    throw new Error('فشل في جلب البيانات');
-                }
-                
-                botData = await response.json();
-                showLoading(false);
-                showMainServices();
-                
-            } catch (error) {
-                console.error('Error loading data:', error);
-                showLoading(false);
-                useDefaultData();
-            }
-        }
-
-        // استخدام البيانات الافتراضية
-        function useDefaultData() {
-            botData = {
-                services: {
-                    'schedule': { 
-                        name: 'الجدول الدراسي', 
-                        icon: '📅',
-                        sections: [
-                            { name: 'الصف الأول', description: 'الجدول الأسبوعي للصف الأول', content: [
-                                { type: 'text', content: '📅 **الجدول الدراسي للصف الأول**\n\n**الأحد:**\n• رياضيات (8:00 - 9:00)\n• عربي (9:00 - 10:00)\n• علوم (10:30 - 11:30)\n\n**الاثنين:**\n• إنجليزي (8:00 - 9:00)\n• تاريخ (9:00 - 10:00)\n• رياضة (10:30 - 11:30)' }
-                            ]},
-                            { name: 'الصف الثاني', description: 'الجدول الأسبوعي للصف الثاني', content: [
-                                { type: 'text', content: '📅 **الجدول الدراسي للصف الثاني**\n\n**الأحد:**\n• علوم (8:00 - 9:00)\n• عربي (9:00 - 10:00)\n• رياضيات (10:30 - 11:30)\n\n**الاثنين:**\n• إنجليزي (8:00 - 9:00)\n• تربية إسلامية (9:00 - 10:00)\n• رياضة (10:30 - 11:30)' }
-                            ]},
-                            { name: 'الصف الثالث', description: 'الجدول الأسبوعي للصف الثالث', content: [
-                                { type: 'text', content: '📅 **الجدول الدراسي للصف الثالث**\n\n**الأحد:**\n• إنجليزي (8:00 - 9:00)\n• رياضيات (9:00 - 10:00)\n• علوم (10:30 - 11:30)\n\n**الاثنين:**\n• عربي (8:00 - 9:00)\n• تربية إسلامية (9:00 - 10:00)\n• رياضة (10:30 - 11:30)' }
-                            ]}
-                        ] 
-                    },
-                    'homework': { 
-                        name: 'الواجبات المنزلية', 
-                        icon: '📝',
-                        sections: [
-                            { name: 'الصف الأول', description: 'الواجبات المطلوبة للصف الأول', content: [
-                                { type: 'text', content: '📝 **واجبات الصف الأول**\n\n**الرياضيات:**\n• حل التمارين من صفحة 45 إلى 47\n• حفظ جدول الضرب للعدد 2\n\n**اللغة العربية:**\n• كتابة موضوع تعبير عن "المدرسة"\n• قراءة القصة من صفحة 23\n\n⏰ **موعد التسليم:** غداً' }
-                            ]},
-                            { name: 'الصف الثاني', description: 'الواجبات المطلوبة للصف الثاني', content: [
-                                { type: 'text', content: '📝 **واجبات الصف الثاني**\n\n**الرياضيات:**\n• حل المسائل من صفحة 32 إلى 35\n• مراجعة درس الكسور\n\n**اللغة العربية:**\n• إملاء الفقرة الأولى من الدرس\n• كتابة 10 أسطر عن النظافة\n\n⏰ **موعد التسليم:** بعد غد' }
-                            ]},
-                            { name: 'الصف الثالث', description: 'الواجبات المطلوبة للصف الثالث', content: [
-                                { type: 'text', content: '📝 **واجبات الصف الثالث**\n\n**الرياضيات:**\n• حل التمارين من صفحة 50 إلى 55\n• إعداد عرض عن الأشكال الهندسية\n\n**اللغة العربية:**\n• تحليل النص الأدبي من صفحة 67\n• كتابة قصة قصيرة\n\n⏰ **موعد التسليم:** الأسبوع القادم' }
-                            ]}
-                        ] 
-                    },
-                    'ai': { 
-                        name: 'المساعد الذكي', 
-                        icon: '🤖',
-                        sections: [] 
-                    },
-                    'broadcast': { 
-                        name: 'البروكاست', 
-                        icon: '📢',
-                        sections: [] 
-                    },
-                    'programs': { 
-                        name: 'البرامج والمسابقات', 
-                        icon: '🏆',
-                        sections: [] 
-                    },
-                    'files': { 
-                        name: 'الملفات المرسلة', 
-                        icon: '📁',
-                        sections: [
-                            { 
-                                name: 'ملفات الصف الأول', 
-                                description: 'جميع الملفات المرسلة للصف الأول',
-                                content: [
-                                    { type: 'pdf', title: 'جدول الاختبارات', fileUrl: '/files/exam-schedule.pdf' },
-                                    { type: 'pdf', title: 'قائمة الكتب', fileUrl: '/files/books-list.pdf' }
-                                ]
-                            },
-                            { 
-                                name: 'ملفات الصف الثاني', 
-                                description: 'جميع الملفات المرسلة للصف الثاني',
-                                content: [
-                                    { type: 'pdf', title: 'دليل ولي الأمر', fileUrl: '/files/parent-guide.pdf' },
-                                    { type: 'pdf', title: 'التقويم الدراسي', fileUrl: '/files/calendar-2024.pdf' }
-                                ]
-                            }
-                        ] 
-                    },
-                    'exams': { 
-                        name: 'الاختبارات', 
-                        icon: '📋',
-                        sections: [] 
-                    },
-                    'contact': { 
-                        name: 'تواصل معنا', 
-                        icon: '📞',
-                        sections: [] 
-                    }
-                }
-            };
+        // تهيئة التطبيق
+        function initializeApp() {
             showMainServices();
         }
 
-        // عرض الخدمات الرئيسية
+        // إظهار الخدمات الرئيسية (المستوى 1)
         function showMainServices() {
             hideAllContainers();
             document.getElementById('servicesContainer').classList.remove('hidden');
             document.getElementById('navigationHeader').classList.add('hidden');
             
-            const servicesContainer = document.getElementById('servicesContainer');
-            servicesContainer.innerHTML = '';
+            const servicesGrid = document.getElementById('servicesGrid');
+            servicesGrid.innerHTML = '';
 
-            let servicesHtml = `
-                <div class="message-bubble">
-                    <div class="bg-gradient-to-r from-blue-100 to-purple-100 rounded-xl p-3 border border-blue-200">
-                        <p class="text-gray-800 font-bold mb-2 text-sm">🚀 اختر الخدمة المطلوبة:</p>
-                        <div class="grid grid-cols-2 gap-2">
-            `;
-
-            // تعريف الأزرار مع الأيقونات والنصوص
             const serviceButtons = [
-                { key: 'schedule', name: 'الجدول الدراسي', icon: '📅', color: 'bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600' },
-                { key: 'homework', name: 'الواجبات المنزلية', icon: '📝', color: 'bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600' },
-                { key: 'ai', name: 'المساعد الذكي', icon: '🤖', color: 'bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600' },
-                { key: 'broadcast', name: 'البروكاست', icon: '📢', color: 'bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600' },
-                { key: 'programs', name: 'البرامج والمسابقات', icon: '🏆', color: 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600' },
-                { key: 'files', name: 'الملفات المرسلة', icon: '📁', color: 'bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600' },
-                { key: 'exams', name: 'الاختبارات', icon: '📋', color: 'bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600' },
-                { key: 'contact', name: 'تواصل معنا', icon: '📞', color: 'bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600' }
+                { key: 'schedule', name: 'الجدول الدراسي', icon: '📅', color: 'from-purple-500 to-indigo-500' },
+                { key: 'homework', name: 'الواجبات المنزلية', icon: '📝', color: 'from-red-500 to-pink-500' },
+                { key: 'ai', name: 'المساعد الذكي', icon: '🤖', color: 'from-cyan-500 to-blue-500' },
+                { key: 'broadcast', name: 'البروكاست', icon: '📢', color: 'from-green-500 to-teal-500' },
+                { key: 'programs', name: 'البرامج والمسابقات', icon: '🏆', color: 'from-orange-500 to-amber-500' },
+                { key: 'files', name: 'الملفات المرسلة', icon: '📁', color: 'from-blue-500 to-cyan-500' },
+                { key: 'exams', name: 'الاختبارات', icon: '📋', color: 'from-pink-500 to-rose-500' },
+                { key: 'contact', name: 'تواصل معنا', icon: '📞', color: 'from-indigo-500 to-purple-500' }
             ];
 
             serviceButtons.forEach(button => {
-                servicesHtml += `
-                    <button onclick="selectService('${button.key}')" class="${button.color} text-white p-2 rounded-lg text-xs font-medium transition-all service-card flex flex-col items-center justify-center h-14">
-                        <span class="text-sm mb-1">${button.icon}</span>
-                        <span class="text-xs">${button.name}</span>
-                    </button>
+                const service = botData.services[button.key];
+                const buttonElement = document.createElement('button');
+                buttonElement.className = `bg-gradient-to-r ${button.color} hover:from-${button.color.split('-')[1]}-600 hover:to-${button.color.split('-')[3]}-600 text-white p-2 rounded-lg text-xs font-medium transition-all service-card flex flex-col items-center justify-center h-14`;
+                buttonElement.innerHTML = `
+                    <span class="text-sm mb-1">${service.icon}</span>
+                    <span class="text-xs">${service.name}</span>
                 `;
+                buttonElement.onclick = () => selectService(button.key);
+                servicesGrid.appendChild(buttonElement);
             });
-
-            servicesHtml += `
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            servicesContainer.innerHTML = servicesHtml;
         }
 
-        // اختيار خدمة
-        async function selectService(serviceKey) {
+        // اختيار خدمة (المستوى 2)
+        function selectService(serviceKey) {
             currentService = serviceKey;
-            const serviceInfo = botData.services[serviceKey];
+            const service = botData.services[serviceKey];
             
-            showLoading(true);
-            
-            try {
-                const response = await fetch(API_URL);
-                if (!response.ok) throw new Error('فشل في جلب البيانات');
-                
-                const data = await response.json();
-                const serviceData = data.services[serviceKey];
-                
-                showLoading(false);
-                
-                if (serviceData && serviceData.sections && serviceData.sections.length > 0) {
-                    showServiceSections(serviceKey);
-                } else {
-                    showServiceContent(serviceKey, null);
-                }
-                
-            } catch (error) {
-                showLoading(false);
-                const serviceData = botData.services[serviceKey];
-                if (serviceData && serviceData.sections && serviceData.sections.length > 0) {
-                    showServiceSections(serviceKey);
-                } else {
-                    showServiceContent(serviceKey, null);
-                }
+            if (service.sections && service.sections.length > 0) {
+                showServiceSections(serviceKey);
+            } else {
+                showServiceContent(serviceKey, null);
             }
         }
 
-        // عرض أقسام الخدمة
+        // إظهار أقسام الخدمة (المستوى 2)
         function showServiceSections(serviceKey) {
             hideAllContainers();
             document.getElementById('sectionsContainer').classList.remove('hidden');
@@ -534,28 +374,19 @@
             
             let sectionsHtml = `
                 <div class="message-bubble">
-                    <div class="bg-gradient-to-r from-blue-100 to-purple-100 rounded-xl p-3 border border-blue-200">
+                    <div class="bg-blue-100 rounded-xl p-3 border border-blue-200">
                         <p class="text-gray-800 font-bold mb-2 text-sm">📂 اختر القسم المطلوب:</p>
                         <div class="grid grid-cols-2 gap-2">
             `;
 
-            if (service.sections && service.sections.length > 0) {
-                service.sections.forEach((section, index) => {
-                    sectionsHtml += `
-                        <button onclick="selectSection('${serviceKey}', ${index})" class="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white p-2 rounded-lg text-xs font-medium transition-all service-card flex flex-col items-center justify-center h-14">
-                            <span class="text-sm mb-1">📁</span>
-                            <span class="text-xs">${section.name}</span>
-                        </button>
-                    `;
-                });
-            } else {
+            service.sections.forEach((section, index) => {
                 sectionsHtml += `
-                    <div class="col-span-2 bg-yellow-100 border border-yellow-300 text-yellow-800 p-3 rounded-lg text-center">
-                        <span class="text-sm">⚠️</span>
-                        <p class="mt-1 text-xs">لا توجد أقسام متاحة لهذه الخدمة حالياً</p>
-                    </div>
+                    <button onclick="selectSection('${serviceKey}', ${index})" class="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white p-2 rounded-lg text-xs font-medium transition-all service-card flex flex-col items-center justify-center h-14">
+                        <span class="text-sm mb-1">📁</span>
+                        <span class="text-xs">${section.name}</span>
+                    </button>
                 `;
-            }
+            });
 
             sectionsHtml += `
                         </div>
@@ -566,14 +397,14 @@
             sectionsContainer.innerHTML = sectionsHtml;
         }
 
-        // اختيار قسم
+        // اختيار قسم (المستوى 3)
         function selectSection(serviceKey, sectionIndex) {
             currentService = serviceKey;
             currentSection = sectionIndex;
             showServiceContent(serviceKey, sectionIndex);
         }
 
-        // عرض محتوى الخدمة
+        // إظهار محتوى الخدمة (المستوى 3)
         function showServiceContent(serviceKey, sectionIndex) {
             hideAllContainers();
             document.getElementById('contentContainer').classList.remove('hidden');
@@ -590,50 +421,63 @@
                 
                 contentHtml = `
                     <div class="message-bubble">
-                        <div class="bg-gradient-to-r from-blue-100 to-purple-100 rounded-xl p-3 border border-blue-200">
+                        <div class="bg-blue-100 rounded-xl p-3 border border-blue-200">
                             <h3 class="font-bold text-sm mb-1 text-gray-800">${section.name}</h3>
-                            ${section.description && section.description !== 'لا يوجد وصف' ? 
-                                `<p class="text-gray-600 mb-2 bg-white/50 p-2 rounded text-xs">${section.description}</p>` : ''}
+                            ${section.description ? `<p class="text-gray-600 mb-2 bg-white/50 p-2 rounded text-xs">${section.description}</p>` : ''}
                 `;
                 
-                if (section.content && section.content.length > 0) {
-                    section.content.forEach(item => {
-                        if (item.type === 'text') {
-                            contentHtml += `
-                                <div class="bg-white p-3 rounded-lg border border-gray-200 mb-2 shadow-sm">
-                                    <p class="text-gray-800 whitespace-pre-line leading-relaxed text-xs">${item.content}</p>
+                section.content.forEach(item => {
+                    if (item.type === 'text') {
+                        contentHtml += `
+                            <div class="bg-white p-3 rounded-lg border border-gray-200 mb-2">
+                                <p class="text-gray-800 whitespace-pre-line text-xs">${item.content}</p>
+                            </div>
+                        `;
+                    } else if (item.type === 'pdf') {
+                        contentHtml += `
+                            <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2 flex items-center justify-between file-item">
+                                <div class="flex items-center">
+                                    <span class="ml-2 text-lg">📄</span>
+                                    <div>
+                                        <p class="text-gray-800 font-medium text-xs">${item.title}</p>
+                                        <p class="text-gray-500 text-xs">ملف PDF</p>
+                                    </div>
                                 </div>
-                            `;
-                        } else if (item.type === 'pdf') {
-                            contentHtml += `
-                                <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2 shadow-sm flex items-center justify-between file-item">
+                                <div class="flex space-x-1 space-x-reverse">
+                                    <a href="${item.fileUrl}" target="_blank" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs transition-colors">
+                                        معاينة
+                                    </a>
+                                    <a href="${item.fileUrl}" download class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors">
+                                        تحميل
+                                    </a>
+                                </div>
+                            </div>
+                        `;
+                    } else if (item.type === 'image') {
+                        contentHtml += `
+                            <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2 file-item">
+                                <div class="flex items-center justify-between mb-2">
                                     <div class="flex items-center">
-                                        <span class="ml-2 text-lg">📄</span>
+                                        <span class="ml-2 text-lg">🖼️</span>
                                         <div>
                                             <p class="text-gray-800 font-medium text-xs">${item.title}</p>
-                                            <p class="text-gray-500 text-xs">ملف PDF</p>
+                                            <p class="text-gray-500 text-xs">صورة</p>
                                         </div>
                                     </div>
                                     <div class="flex space-x-1 space-x-reverse">
-                                        <a href="${window.location.origin}${item.fileUrl}" target="_blank" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs transition-colors shadow">
+                                        <button onclick="openImageModal('${item.fileUrl}')" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs transition-colors">
                                             معاينة
-                                        </a>
-                                        <a href="${window.location.origin}${item.fileUrl}" download class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors shadow">
+                                        </button>
+                                        <a href="${item.fileUrl}" download class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors">
                                             تحميل
                                         </a>
                                     </div>
                                 </div>
-                            `;
-                        }
-                    });
-                } else {
-                    contentHtml += `
-                        <div class="bg-yellow-100 border border-yellow-300 text-yellow-800 p-3 rounded-lg text-center">
-                            <span class="text-sm">⚠️</span>
-                            <p class="mt-1 text-xs">لا يوجد محتوى في هذا القسم حالياً</p>
-                        </div>
-                    `;
-                }
+                                <img src="${item.fileUrl}" alt="${item.title}" class="w-full rounded-lg cursor-pointer" onclick="openImageModal('${item.fileUrl}')">
+                            </div>
+                        `;
+                    }
+                });
                 
                 contentHtml += `</div></div>`;
             } else {
@@ -641,10 +485,10 @@
                 const defaultContent = getDefaultServiceContent(serviceKey);
                 contentHtml = `
                     <div class="message-bubble">
-                        <div class="bg-gradient-to-r from-blue-100 to-purple-100 rounded-xl p-3 border border-blue-200">
+                        <div class="bg-blue-100 rounded-xl p-3 border border-blue-200">
                             <h3 class="font-bold text-sm mb-2 text-gray-800">${service.name}</h3>
-                            <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-                                <p class="text-gray-800 whitespace-pre-line leading-relaxed text-xs">${defaultContent}</p>
+                            <div class="bg-white p-3 rounded-lg border border-gray-200">
+                                <p class="text-gray-800 whitespace-pre-line text-xs">${defaultContent}</p>
                             </div>
                         </div>
                     </div>
@@ -654,20 +498,27 @@
             document.getElementById('contentContainer').innerHTML = contentHtml;
         }
 
-        // المحتوى الافتراضي للخدمات
-        function getDefaultServiceContent(serviceKey) {
-            const defaultContents = {
-                'schedule': '📅 **الجدول الدراسي**\n\nيمكنك الاطلاع على الجداول الدراسية لجميع الصفوف من الأقسام المخصصة لكل صف.\n\n• اختر الصف المطلوب من القائمة\n• الجداول محدثة أسبوعياً\n• تشمل جميع المواد والأنشطة\n• مواعيد الحصص من 8:00 صباحاً إلى 11:30 ظهراً',
-                'homework': '📝 **الواجبات المنزلية**\n\nالواجبات متاحة في الأقسام المخصصة لكل صف دراسي.\n\n• اختر الصف المطلوب\n• ستجد تفاصيل كل واجب\n• مواعيد التسليم محددة\n• يمكنك التواصل مع المعلم للاستفسار',
-                'ai': '🤖 **المساعد الذكي**\n\nمرحباً! أنا مساعدك الذكي للرد على استفساراتك المدرسية.\n\nيمكنني مساعدتك في:\n• الإجابة على الأسئلة التعليمية\n• شرح المفاهيم الصعبة\n• مساعدة في حل الواجبات\n• تقديم نصائح دراسية\n• توجيهك للخدمات المناسبة\n\nما الذي تريد أن تسأل عنه؟ اكتب سؤالك مباشرة في مربع الرسائل!',
-                'broadcast': '📢 **آخر الإعلانات والأخبار**\n\n🔔 **تذكير:** اختبار الرياضيات يوم الأربعاء القادم\n🔔 **إجازة:** إجازة نصف العام تبدأ 15 فبراير\n🔔 **اجتماع:** اجتماع أولياء الأمور يوم الخميس الساعة 10 صباحاً\n🔔 **تأجيل:** تم تأجيل رحلة الصف السادس\n🔔 **فعالية:** معرض الكتاب يوم الأحد القادم\n\n📅 **آخر تحديث:** اليوم 2:30 مساءً',
-                'programs': '🏆 **البرامج والمسابقات الحالية**\n\n🎯 **مسابقة القرآن الكريم**\n• التسجيل مفتوح حتى 20 فبراير\n• للمراحل من الثالث إلى السادس\n\n🎯 **برنامج المواهب الطلابية**\n• يبدأ 20 فبراير\n• يشمل الرسم، الخطابة، والأنشطة الفنية\n\n🎯 **مسابقة الرياضيات**\n• المرحلة النهائية 25 فبراير\n\n🎯 **معرض العلوم السنوي**\n• مارس 2024\n• التسجيل مفتوح\n\nللتسجيل أو الاستفسار، اضغط على قسم "تواصل معنا"',
-                'files': '📁 **الملفات المتاحة للتحميل**\n\nجميع الملفات متاحة في الأقسام المخصصة لكل صف:\n\n• 📄 جدول الاختبارات النهائية\n• 📄 قائمة الكتب المطلوبة\n• 📄 نموذج طلب إجازة\n• 📄 دليل ولي الأمر\n• 📄 التقويم الدراسي 2024\n• 📄 نماذج التسجيل في الأنشطة\n\nلتحميل أي ملف، اختر قسم الصف المطلوب من القائمة',
-                'exams': '📋 **جدول الاختبارات القادمة**\n\n**الفصل الدراسي الثاني:**\n\n📝 **الرياضيات:**\n• الأربعاء 10 فبراير - 8:00 صباحاً\n\n📝 **اللغة العربية:**\n• الخميس 11 فبراير - 8:00 صباحاً\n\n📝 **العلوم:**\n• الأحد 14 فبراير - 8:00 صباحاً\n\n📝 **اللغة الإنجليزية:**\n• الاثنين 15 فبراير - 8:00 صباحاً\n\n⏰ **مدة كل اختبار:** ساعتان\n📍 **مكان الاختبار:** الفصول الدراسية',
-                'contact': '📞 **معلومات التواصل**\n\n**الهاتف:**\n• 011-234-5678\n\n**البريد الإلكتروني:**\n• info@school.edu.sa\n\n**الموقع الإلكتروني:**\n• www.school.edu.sa\n\n**العنوان:**\n• شارع التعليم، حي النخيل، الرياض\n\n**ساعات العمل:**\n• الأحد - الخميس: 7:00 ص - 2:00 م\n\n**مدير المدرسة:**\n• أ. محمد أحمد\n• يمكنكم حجز موعد عبر الهاتف'
-            };
-            
-            return defaultContents[serviceKey] || '🔄 الخدمة غير متاحة حالياً. يرجى المحاولة لاحقاً.';
+        // فتح معاينة الصورة
+        function openImageModal(imageUrl) {
+            currentImageUrl = imageUrl;
+            document.getElementById('modalImage').src = imageUrl;
+            document.getElementById('imageModal').classList.remove('hidden');
+        }
+
+        // إغلاق معاينة الصورة
+        function closeImageModal() {
+            document.getElementById('imageModal').classList.add('hidden');
+            currentImageUrl = null;
+        }
+
+        // تحميل الصورة الحالية
+        function downloadCurrentImage() {
+            if (currentImageUrl) {
+                const link = document.createElement('a');
+                link.href = currentImageUrl;
+                link.download = 'صورة المدرسة.jpg';
+                link.click();
+            }
         }
 
         // إخفاء جميع الحاويات
@@ -675,20 +526,38 @@
             document.getElementById('servicesContainer').classList.add('hidden');
             document.getElementById('sectionsContainer').classList.add('hidden');
             document.getElementById('contentContainer').classList.add('hidden');
-            document.getElementById('loadingIndicator').classList.add('hidden');
         }
 
-        // عرض/إخفاء التحميل
-        function showLoading(show) {
-            document.getElementById('loadingIndicator').classList.toggle('hidden', !show);
-            if (show) {
-                hideAllContainers();
+        // المحتوى الافتراضي للخدمات
+        function getDefaultServiceContent(serviceKey) {
+            const defaultContents = {
+                'ai': '🤖 **المساعد الذكي**\n\nمرحباً! أنا مساعدك الذكي للرد على استفساراتك المدرسية.\n\nما الذي تريد أن تسأل عنه؟',
+                'broadcast': '📢 **آخر الإعلانات**\n\n• اجتماع أولياء الأمور: الخميس القادم\n• إجازة نصف العام: تبدأ 15 فبراير\n• اختبار الرياضيات: الأربعاء',
+                'exams': '📋 **الاختبارات القادمة**\n\n• الرياضيات: الأربعاء 10 فبراير\n• اللغة العربية: الخميس 11 فبراير\n• العلوم: الأحد 14 فبراير',
+                'contact': '📞 **معلومات التواصل**\n\n• الهاتف: 011-234-5678\n• البريد: info@school.edu.sa\n• العنوان: شارع التعليم، الرياض'
+            };
+            return defaultContents[serviceKey] || 'المحتوى غير متوفر حالياً.';
+        }
+
+        // إرسال رسالة
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (message) {
+                addMessage(message, true);
+                input.value = '';
+                
+                setTimeout(() => {
+                    const responses = [
+                        "شكراً على سؤالك! هل يمكنني مساعدتك في شيء آخر؟",
+                        "تم استلام سؤالك، هل تريد الاستفسار عن خدمة محددة؟",
+                        "للمساعدة الأفضل، اختر إحدى الخدمات من الأعلى"
+                    ];
+                    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                    addMessage(randomResponse, false);
+                }, 1000);
             }
-        }
-
-        // تحديث حالة الاتصال
-        function updateStatus(status) {
-            document.getElementById('connectionStatus').textContent = status;
         }
 
         // إضافة رسالة
@@ -700,21 +569,15 @@
             if (isUser) {
                 messageDiv.innerHTML = `
                     <div class="flex justify-end">
-                        <div class="bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl p-3 max-w-xs shadow">
+                        <div class="bg-blue-500 text-white rounded-xl p-3 max-w-xs shadow">
                             <p class="text-white text-sm">${text}</p>
                         </div>
                     </div>
                 `;
             } else {
                 messageDiv.innerHTML = `
-                    <div class="bg-gradient-to-r from-blue-100 to-purple-100 rounded-xl p-3 max-w-xs border border-blue-200">
-                        <div class="flex items-center space-x-2 space-x-reverse mb-1">
-                            <div class="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                                <span class="text-white text-xs">🤖</span>
-                            </div>
-                            <span class="text-blue-700 text-xs font-bold">مساعد المدرسة</span>
-                        </div>
-                        <p class="text-gray-800 whitespace-pre-line text-sm">${text}</p>
+                    <div class="bg-blue-100 rounded-xl p-3 max-w-xs border border-blue-200">
+                        <p class="text-gray-800 text-sm">${text}</p>
                     </div>
                 `;
             }
@@ -723,75 +586,15 @@
             messagesArea.scrollTop = messagesArea.scrollHeight;
         }
 
-        // عرض مؤشر الكتابة
-        function showTypingIndicator() {
-            const messagesArea = document.getElementById('messagesArea');
-            const typingDiv = document.createElement('div');
-            typingDiv.id = 'typingIndicator';
-            typingDiv.className = 'message-bubble';
-            typingDiv.innerHTML = `
-                <div class="bg-gradient-to-r from-blue-100 to-purple-100 rounded-xl p-3 max-w-xs border border-blue-200">
-                    <div class="flex items-center space-x-2 space-x-reverse">
-                        <div class="typing-dots">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                        </div>
-                        <span class="text-gray-600 text-xs">${isAIActive ? '🤖 جاري الكتابة...' : '🔍 جاري البحث...'}</span>
-                    </div>
-                </div>
-            `;
-            messagesArea.appendChild(typingDiv);
-            messagesArea.scrollTop = messagesArea.scrollHeight;
-        }
-
-        // إخفاء مؤشر الكتابة
-        function hideTypingIndicator() {
-            const typingIndicator = document.getElementById('typingIndicator');
-            if (typingIndicator) {
-                typingIndicator.remove();
-            }
-        }
-
-        // إرسال رسالة
-        async function sendMessage() {
-            const input = document.getElementById('messageInput');
-            const message = input.value.trim();
-            
-            if (message) {
-                addMessage(message, true);
-                input.value = '';
-                
-                showTypingIndicator();
-                
-                setTimeout(async () => {
-                    try {
-                        const response = await getAIResponse(message);
-                        hideTypingIndicator();
-                        addMessage(response, false);
-                    } catch (error) {
-                        hideTypingIndicator();
-                        const fallbackResponse = getSmartResponse(message);
-                        addMessage(fallbackResponse, false);
-                    }
-                }, 1500);
-            }
-        }
-
-        // التعامل مع ضغط المفاتيح
-        function handleKeyPress(event) {
+        // التعامل مع زر Enter
+        document.getElementById('messageInput').addEventListener('keypress', function(event) {
             if (event.key === 'Enter') {
                 sendMessage();
             }
-        }
-
-        // إضافة مستمع event للزر Enter
-        document.getElementById('messageInput').addEventListener('keypress', handleKeyPress);
-
-        // تحميل البيانات عند بدء الصفحة
-        document.addEventListener('DOMContentLoaded', function() {
-            loadData();
         });
+
+        // بدء التطبيق
+        document.addEventListener('DOMContentLoaded', initializeApp);
     </script>
 </body>
 </html>
