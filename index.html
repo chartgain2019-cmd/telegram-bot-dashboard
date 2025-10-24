@@ -54,6 +54,48 @@
                 opacity: 1;
             }
         }
+        /* زر الرجوع المحسن */
+        .back-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+        }
+        .back-button:active {
+            transform: translateY(0);
+        }
+        /* زر الرجوع العائم */
+        .floating-back-button {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            border: none;
+            padding: 14px 18px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 14px;
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            z-index: 1000;
+        }
+        .floating-back-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.6);
+        }
         /* إخفاء واجهة JotForm الافتراضية */
         .jf-agent-widget {
             display: none !important;
@@ -86,16 +128,24 @@
 
     <!-- Service Content Container -->
     <div id="serviceContentContainer" class="max-w-md mx-auto bg-white hidden">
-        <div class="p-4 border-b border-gray-200 flex items-center justify-between">
-            <button onclick="backToServices()" class="text-blue-600 font-medium flex items-center space-x-1 space-x-reverse">
-                <span>↩</span>
-                <span>رجوع للخدمات</span>
+        <div class="p-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-blue-50 to-purple-50">
+            <button onclick="backToServices()" class="back-button">
+                <span>⬅</span>
+                <span>العودة إلى الخدمات</span>
             </button>
-            <h3 id="serviceTitle" class="font-bold text-gray-800"></h3>
+            <h3 id="serviceTitle" class="font-bold text-gray-800 text-lg"></h3>
         </div>
         <div id="serviceContent" class="service-content p-4">
             <!-- Service content will be displayed here -->
         </div>
+    </div>
+
+    <!-- Floating Back Button -->
+    <div id="floatingBackButton" class="fixed bottom-6 left-6 z-50 hidden">
+        <button onclick="backToServices()" class="floating-back-button">
+            <span>↶</span>
+            <span>رجوع</span>
+        </button>
     </div>
 
     <!-- Chat Container -->
@@ -192,9 +242,7 @@
         function initializeJotformAI() {
             console.log('🔍 جاري البحث عن JotForm AI...');
             
-            // البحث عن JotForm AI بطرق متعددة
             const checkAI = setInterval(() => {
-                // الطريقة 1: البحث عن الكائن العام
                 if (window.JotformAgent) {
                     console.log('✅ تم العثور على JotformAgent');
                     jotformAIReady = true;
@@ -202,7 +250,6 @@
                     return;
                 }
                 
-                // الطريقة 2: البحث عن أي كائن متعلق بـ JotForm
                 const jotformObjects = Object.keys(window).filter(key => 
                     key.toLowerCase().includes('jotform') || 
                     key.toLowerCase().includes('agent')
@@ -214,24 +261,12 @@
                     clearInterval(checkAI);
                     return;
                 }
-                
-                // الطريقة 3: البحث في event listeners
-                if (window.jotform-ai-loaded) {
-                    console.log('✅ JotForm AI محمل عبر event');
-                    jotformAIReady = true;
-                    clearInterval(checkAI);
-                    return;
-                }
-                
-                console.log('⏳ لا يزال جاري البحث عن JotForm AI...');
             }, 1000);
 
-            // إيقاف البحث بعد 10 ثواني
             setTimeout(() => {
                 clearInterval(checkAI);
                 if (!jotformAIReady) {
                     console.log('❌ لم يتم العثور على JotForm AI');
-                    addMessage('⚠️ تم تحميل JotForm AI ولكن هناك مشكلة في الاتصال. استخدم الخدمات الأخرى أو حاول لاحقاً.', false);
                 }
             }, 10000);
         }
@@ -313,6 +348,7 @@
         function displayServiceContent(serviceData) {
             document.getElementById('chatContainer').classList.add('hidden');
             document.getElementById('serviceContentContainer').classList.remove('hidden');
+            document.getElementById('floatingBackButton').classList.remove('hidden');
             
             document.getElementById('serviceTitle').textContent = serviceData.name;
             
@@ -420,6 +456,7 @@
 
         function backToServices() {
             document.getElementById('serviceContentContainer').classList.add('hidden');
+            document.getElementById('floatingBackButton').classList.add('hidden');
             document.getElementById('chatContainer').classList.remove('hidden');
         }
 
@@ -444,18 +481,14 @@
             }
             
             try {
-                // محاولة استخدام JotForm AI بطرق متعددة
                 let response;
                 
-                // الطريقة 1: JotformAgent مباشرة
                 if (window.JotformAgent && window.JotformAgent.sendMessage) {
                     response = await window.JotformAgent.sendMessage(userMessage);
                 }
-                // الطريقة 2: أي دالة chat متاحة
                 else if (window.JotformAgent && window.JotformAgent.chat) {
                     response = await window.JotformAgent.chat(userMessage);
                 }
-                // الطريقة 3: البحث في أي كائن متعلق
                 else {
                     const aiObjects = Object.keys(window).filter(key => 
                         key.toLowerCase().includes('jotform') || 
@@ -517,7 +550,6 @@
 ما هو نوع المساعدة الذي تبحث عنه؟`;
             }
             
-            // رد ذكي عام مع توجيه للخدمات
             return `🤖 **المساعد الذكي**
 
 شكراً على سؤالك! 🔍
