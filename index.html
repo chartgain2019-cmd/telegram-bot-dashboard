@@ -373,7 +373,7 @@
                         ] 
                     },
                     'homework': { 
-                        name: 'الواجبات', 
+                        name: 'الواجبات المنزلية', 
                         icon: '📝',
                         sections: [
                             { name: 'الصف الأول', description: 'الواجبات المطلوبة للصف الأول', content: [
@@ -398,12 +398,12 @@
                         sections: [] 
                     },
                     'programs': { 
-                        name: 'البرامج', 
+                        name: 'البرامج والمسابقات', 
                         icon: '🏆',
                         sections: [] 
                     },
                     'files': { 
-                        name: 'الملفات', 
+                        name: 'الملفات المرسلة', 
                         icon: '📁',
                         sections: [
                             { 
@@ -430,7 +430,7 @@
                         sections: [] 
                     },
                     'contact': { 
-                        name: 'التواصل', 
+                        name: 'تواصل معنا', 
                         icon: '📞',
                         sections: [] 
                     }
@@ -455,29 +455,26 @@
                         <div class="grid grid-cols-2 gap-2">
             `;
 
-            const serviceButtons = {
-                'schedule': { text: '📅 الجدول', color: 'bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600' },
-                'homework': { text: '📝 الواجبات', color: 'bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600' },
-                'ai': { text: '🤖 المساعد', color: 'bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600' },
-                'broadcast': { text: '📢 البروكاست', color: 'bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600' },
-                'programs': { text: '🏆 البرامج', color: 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600' },
-                'files': { text: '📁 الملفات', color: 'bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600' },
-                'exams': { text: '📋 الاختبارات', color: 'bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600' },
-                'contact': { text: '📞 التواصل', color: 'bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600' }
-            };
+            // تعريف الأزرار مع الأيقونات والنصوص
+            const serviceButtons = [
+                { key: 'schedule', name: 'الجدول الدراسي', icon: '📅', color: 'bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600' },
+                { key: 'homework', name: 'الواجبات المنزلية', icon: '📝', color: 'bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600' },
+                { key: 'ai', name: 'المساعد الذكي', icon: '🤖', color: 'bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600' },
+                { key: 'broadcast', name: 'البروكاست', icon: '📢', color: 'bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600' },
+                { key: 'programs', name: 'البرامج والمسابقات', icon: '🏆', color: 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600' },
+                { key: 'files', name: 'الملفات المرسلة', icon: '📁', color: 'bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600' },
+                { key: 'exams', name: 'الاختبارات', icon: '📋', color: 'bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600' },
+                { key: 'contact', name: 'تواصل معنا', icon: '📞', color: 'bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600' }
+            ];
 
-            for (const [serviceKey, buttonInfo] of Object.entries(serviceButtons)) {
-                const service = botData.services[serviceKey];
-                const serviceName = service ? service.name : buttonInfo.text;
-                const serviceIcon = service ? service.icon : '📌';
-                
+            serviceButtons.forEach(button => {
                 servicesHtml += `
-                    <button onclick="selectService('${serviceKey}')" class="${buttonInfo.color} text-white p-2 rounded-lg text-xs font-medium transition-all service-card flex flex-col items-center justify-center h-14">
-                        <span class="text-sm mb-1">${serviceIcon}</span>
-                        <span class="text-xs">${serviceName}</span>
+                    <button onclick="selectService('${button.key}')" class="${button.color} text-white p-2 rounded-lg text-xs font-medium transition-all service-card flex flex-col items-center justify-center h-14">
+                        <span class="text-sm mb-1">${button.icon}</span>
+                        <span class="text-xs">${button.name}</span>
                     </button>
                 `;
-            }
+            });
 
             servicesHtml += `
                         </div>
