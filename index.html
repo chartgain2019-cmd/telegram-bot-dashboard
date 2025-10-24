@@ -8,8 +8,8 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
-            box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
         .message-bubble {
             animation: slideIn 0.3s ease-out;
@@ -25,79 +25,73 @@
             0%, 100% { opacity: 0.5; }
             50% { opacity: 1; }
         }
-        .service-content img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border: 1px solid #e5e7eb;
-        }
-        .service-content a {
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-        .service-content a:hover {
-            transform: translateY(-1px);
-        }
-        .file-link {
-            transition: all 0.3s ease;
-        }
-        .file-link:hover {
-            background-color: #f0f9ff;
-            transform: scale(1.02);
-        }
-        .back-button {
-            transition: all 0.3s ease;
-        }
-        .back-button:hover {
-            transform: translateX(-5px);
-        }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+<body class="min-h-screen">
     <!-- Header -->
-    <div class="bg-blue-600 text-white p-4 shadow-lg">
+    <div class="bg-white shadow-sm py-3 px-4">
         <div class="flex items-center justify-between max-w-md mx-auto">
             <div class="flex items-center space-x-3 space-x-reverse">
-                <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-                    <span class="text-blue-600 text-xl">🤖</span>
+                <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <span class="text-white text-lg">🤖</span>
                 </div>
                 <div>
-                    <h1 class="font-bold text-lg">بوت خدمة أولياء الأمور</h1>
-                    <p class="text-blue-200 text-sm" id="connectionStatus">جاري الاتصال...</p>
+                    <h1 class="font-bold text-gray-800 text-lg">بوت خدمة أولياء الأمور</h1>
+                    <p class="text-gray-500 text-sm" id="connectionStatus">جاري الاتصال...</p>
                 </div>
-            </div>
-            <div class="text-blue-200">
-                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
-                </svg>
             </div>
         </div>
     </div>
 
-    <!-- Chat Container -->
-    <div class="max-w-md mx-auto bg-white shadow-xl min-h-screen flex flex-col" style="height: 100vh;">
+    <!-- Main Chat Container -->
+    <div class="max-w-md mx-auto bg-white min-h-screen flex flex-col" style="height: calc(100vh - 80px);">
+        
         <!-- Messages Area -->
-        <div id="messagesArea" class="flex-1 p-4 space-y-4 overflow-y-auto">
-            <!-- Welcome Message -->
+        <div id="messagesArea" class="flex-1 p-4 space-y-3 overflow-y-auto">
+            <!-- Welcome Messages -->
             <div class="message-bubble">
-                <div class="bg-gray-100 rounded-lg p-3">
-                    <p class="text-gray-800">مرحباً بك في بوت خدمة أولياء الأمور! 👋</p>
-                    <p class="text-gray-600 text-sm mt-1">جاري تحميل الخدمات المتاحة...</p>
+                <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4">
+                    <p class="text-blue-800 font-medium">مرحباً بك في بوت خدمة أولياء الأمور! 👋</p>
+                    <p class="text-blue-600 text-sm mt-2">أنا هنا لمساعدتك في متابعة شؤون الطلاب والتعرف على آخر المستجدات.</p>
+                </div>
+            </div>
+
+            <div class="message-bubble">
+                <div class="bg-gray-100 rounded-2xl p-4">
+                    <p class="text-gray-800 font-medium">الخدمات المتاحة:</p>
+                    <p class="text-gray-600 text-sm mt-1">اختر الخدمة التي تريدها من القائمة أدناه</p>
                 </div>
             </div>
         </div>
 
-        <!-- Loading Indicator -->
-        <div id="loadingIndicator" class="flex justify-center p-4">
-            <div class="typing-indicator bg-blue-500 text-white rounded-lg p-3">
-                <p>🔄 جاري تحميل البيانات من الخادم...</p>
-            </div>
-        </div>
-
         <!-- Services Container -->
-        <div id="servicesContainer" class="p-4 hidden">
-            <!-- Services will be added here dynamically -->
+        <div id="servicesContainer" class="p-4 border-t border-gray-200">
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="selectService('schedule')" class="bg-purple-500 hover:bg-purple-600 text-white p-3 rounded-xl text-sm font-medium transition-colors">
+                    📅 الجدول الدراسي
+                </button>
+                <button onclick="selectService('homework')" class="bg-red-500 hover:bg-red-600 text-white p-3 rounded-xl text-sm font-medium transition-colors">
+                    📝 الواجبات المنزلية
+                </button>
+                <button onclick="selectService('ai')" class="bg-cyan-500 hover:bg-cyan-600 text-white p-3 rounded-xl text-sm font-medium transition-colors">
+                    🤖 الذكاء الاصطناعي
+                </button>
+                <button onclick="selectService('broadcast')" class="bg-green-500 hover:bg-green-600 text-white p-3 rounded-xl text-sm font-medium transition-colors">
+                    📢 البروكاست
+                </button>
+                <button onclick="selectService('programs')" class="bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-xl text-sm font-medium transition-colors">
+                    🏆 البرامج والمسابقات
+                </button>
+                <button onclick="selectService('files')" class="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-xl text-sm font-medium transition-colors">
+                    📁 الملفات المرسلة
+                </button>
+                <button onclick="selectService('exams')" class="bg-pink-500 hover:bg-pink-600 text-white p-3 rounded-xl text-sm font-medium transition-colors">
+                    📋 الاختبارات
+                </button>
+                <button onclick="selectService('contact')" class="bg-indigo-500 hover:bg-indigo-600 text-white p-3 rounded-xl text-sm font-medium transition-colors">
+                    📞 تواصل معنا
+                </button>
+            </div>
         </div>
 
         <!-- Service Content Container -->
@@ -105,19 +99,26 @@
             <!-- Service content will be displayed here -->
         </div>
 
+        <!-- Loading Indicator -->
+        <div id="loadingIndicator" class="hidden justify-center p-4">
+            <div class="typing-indicator bg-blue-500 text-white rounded-lg px-4 py-2 text-sm">
+                <p>🔄 جاري تحميل البيانات...</p>
+            </div>
+        </div>
+
         <!-- Input Area -->
-        <div class="border-t bg-gray-50 p-4">
+        <div class="border-t border-gray-200 bg-gray-50 p-4">
             <div class="flex items-center space-x-2 space-x-reverse">
                 <input 
                     type="text" 
                     id="messageInput" 
                     placeholder="اكتب رسالتك هنا..."
-                    class="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:border-blue-500"
+                    class="flex-1 border border-gray-300 rounded-full px-4 py-3 focus:outline-none focus:border-blue-500 text-sm"
                     onkeypress="handleKeyPress(event)"
                 >
                 <button 
                     onclick="sendMessage()" 
-                    class="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2 transition-colors"
+                    class="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 transition-colors"
                 >
                     <svg class="w-5 h-5 transform rotate-180" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>
@@ -125,16 +126,21 @@
                 </button>
             </div>
         </div>
+
+        <!-- Back Button -->
+        <div id="fixedBackButton" class="fixed top-20 left-4 z-40 hidden">
+            <button onclick="backToServices()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-full shadow-lg transition-all duration-300 flex items-center justify-center w-12 h-12">
+                <span class="text-lg transform rotate-180">↩</span>
+            </button>
+        </div>
     </div>
 
     <script>
-        // 🔥 التعديل: استخدام نفس API لوحة التحكم
         const API_BASE = window.location.origin;
         const API_URL = `${API_BASE}/api/data`;
         
-        let currentService = null;
         let botData = null;
-        let currentView = 'services'; // 'services' or 'serviceContent'
+        let currentView = 'services';
 
         // Initialize Telegram Web App
         if (window.Telegram && Telegram.WebApp) {
@@ -149,98 +155,36 @@
             
             try {
                 const response = await fetch(API_URL);
-                if (!response.ok) {
-                    throw new Error('فشل في جلب البيانات');
-                }
+                if (!response.ok) throw new Error('فشل في جلب البيانات');
                 
                 botData = await response.json();
                 updateStatus('✅ متصل - البيانات محدثة');
                 showLoading(false);
-                displayServices();
                 
             } catch (error) {
                 console.error('Error:', error);
                 updateStatus('❌ خطأ في الاتصال');
                 showLoading(false);
-                useDefaultData();
             }
-        }
-
-        function useDefaultData() {
-            botData = {
-                services: {
-                    'schedule': { name: 'الجدول الدراسي', sections: [] },
-                    'homework': { name: 'الواجبات المنزلية', sections: [] },
-                    'ai': { name: 'ربوت الذكاء الاصطناعي', sections: [] },
-                    'broadcast': { name: 'البروكاست', sections: [] },
-                    'programs': { name: 'البرامج والمسابقات', sections: [] },
-                    'files': { name: 'الملفات المرسلة', sections: [] },
-                    'exams': { name: 'الاختبارات', sections: [] },
-                    'contact': { name: 'تواصل معنا', sections: [] }
-                }
-            };
-            displayServices();
-        }
-
-        function displayServices() {
-            const servicesContainer = document.getElementById('servicesContainer');
-            const serviceContentContainer = document.getElementById('serviceContentContainer');
-            const messagesArea = document.getElementById('messagesArea');
-            
-            servicesContainer.innerHTML = '';
-            servicesContainer.classList.remove('hidden');
-            serviceContentContainer.classList.add('hidden');
-            messagesArea.classList.remove('hidden');
-            currentView = 'services';
-
-            let servicesHtml = `
-                <div class="message-bubble">
-                    <div class="bg-gray-100 rounded-lg p-3">
-                        <p class="text-gray-800 mb-3 font-medium">اختر الخدمة المطلوبة:</p>
-                        <div class="grid grid-cols-2 gap-2">
-            `;
-
-            const serviceButtons = {
-                'schedule': { text: '📅 الجدول الدراسي', color: 'bg-purple-500 hover:bg-purple-600' },
-                'homework': { text: '📝 الواجبات', color: 'bg-red-500 hover:bg-red-600' },
-                'ai': { text: '🤖 ربوت الذكاء الاصطناعي', color: 'bg-cyan-500 hover:bg-cyan-600' },
-                'broadcast': { text: '📢 البروكاست', color: 'bg-green-500 hover:bg-green-600' },
-                'programs': { text: '🏆 البرامج والمسابقات', color: 'bg-orange-500 hover:bg-orange-600' },
-                'files': { text: '📁 الملفات المرسلة', color: 'bg-blue-500 hover:bg-blue-600' },
-                'exams': { text: '📋 الاختبارات', color: 'bg-pink-500 hover:bg-pink-600' },
-                'contact': { text: '📞 تواصل معنا', color: 'bg-indigo-500 hover:bg-indigo-600' }
-            };
-
-            for (const [serviceKey, buttonInfo] of Object.entries(serviceButtons)) {
-                const service = botData.services[serviceKey];
-                const serviceName = service ? service.name : buttonInfo.text;
-                
-                servicesHtml += `
-                    <button onclick="selectService('${serviceKey}')" 
-                            class="${buttonInfo.color} text-white p-2 rounded-lg text-sm transition-colors hover:opacity-90 active:scale-95">
-                        ${serviceName}
-                    </button>
-                `;
-            }
-
-            servicesHtml += `
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            servicesContainer.innerHTML = servicesHtml;
-            addMessage('اختر الخدمة التي تريدها من القائمة أعلاه 👆', false);
         }
 
         async function selectService(serviceKey) {
-            const serviceInfo = botData.services[serviceKey];
-            addMessage(`أنت تختار: ${serviceInfo.name}`, true);
+            const serviceNames = {
+                'schedule': 'الجدول الدراسي',
+                'homework': 'الواجبات المنزلية', 
+                'ai': 'ربوت الذكاء الاصطناعي',
+                'broadcast': 'البروكاست',
+                'programs': 'البرامج والمسابقات',
+                'files': 'الملفات المرسلة',
+                'exams': 'الاختبارات',
+                'contact': 'تواصل معنا'
+            };
+
+            addMessage(`اخترت: ${serviceNames[serviceKey]}`, true);
             
             showLoading(true);
             
             try {
-                // 🔥 جلب البيانات الحقيقية من الخادم
                 const response = await fetch(API_URL);
                 if (!response.ok) throw new Error('فشل في جلب البيانات');
                 
@@ -266,53 +210,49 @@
             const servicesContainer = document.getElementById('servicesContainer');
             const serviceContentContainer = document.getElementById('serviceContentContainer');
             const messagesArea = document.getElementById('messagesArea');
+            const fixedBackButton = document.getElementById('fixedBackButton');
+            const inputArea = document.querySelector('.border-t.border-gray-200.bg-gray-50');
             
             servicesContainer.classList.add('hidden');
             serviceContentContainer.classList.remove('hidden');
             messagesArea.classList.add('hidden');
-            serviceContentContainer.innerHTML = '';
+            inputArea.classList.add('hidden');
+            fixedBackButton.classList.remove('hidden');
             currentView = 'serviceContent';
 
             let contentHtml = `
-                <div class="service-content space-y-4">
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-bold text-blue-900">${serviceData.name}</h3>
-                            <button onclick="backToServices()" class="back-button bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 space-x-reverse">
-                                <span>↩</span>
-                                <span>رجوع للخدمات</span>
-                            </button>
-                        </div>
+                <div class="space-y-4">
+                    <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4">
+                        <h3 class="text-blue-900 font-bold text-lg text-center">${serviceData.name}</h3>
+                    </div>
             `;
 
             if (serviceData.sections.length === 0) {
                 contentHtml += `
                     <div class="text-center py-8">
                         <div class="text-4xl mb-2">📋</div>
-                        <p class="text-blue-800 text-lg">لا توجد بيانات متاحة حالياً</p>
-                        <p class="text-blue-600 text-sm mt-2">سيتم إضافة المحتوى قريباً من قبل الإدارة</p>
+                        <p class="text-gray-700 text-lg">لا توجد بيانات متاحة حالياً</p>
+                        <p class="text-gray-500 text-sm mt-2">سيتم إضافة المحتوى قريباً من قبل الإدارة</p>
                     </div>
                 `;
             } else {
                 serviceData.sections.forEach((section, sectionIndex) => {
                     contentHtml += `
-                        <div class="bg-white rounded-lg p-4 border border-gray-200">
-                            <h4 class="font-bold text-gray-800 text-lg mb-2">${section.name}</h4>
-                            ${section.description && section.description !== 'لا يوجد وصف' ? 
-                                `<p class="text-gray-600 text-sm mb-4">${section.description}</p>` : ''}
+                        <div class="bg-white border border-gray-200 rounded-2xl p-4">
+                            <h4 class="font-bold text-gray-800 text-lg mb-3">${section.name}</h4>
                     `;
 
                     if (section.content && section.content.length > 0) {
-                        contentHtml += `<div class="space-y-4">`;
+                        contentHtml += `<div class="space-y-3">`;
                         
                         section.content.forEach((item, itemIndex) => {
                             if (item.type === 'text') {
                                 contentHtml += `
-                                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
                                         <div class="flex items-start space-x-3 space-x-reverse">
                                             <span class="text-gray-500 text-xl mt-1">📄</span>
                                             <div class="flex-1">
-                                                ${item.title ? `<h5 class="font-semibold text-gray-800 mb-2 text-lg">${item.title}</h5>` : ''}
+                                                ${item.title ? `<h5 class="font-semibold text-gray-800 mb-2">${item.title}</h5>` : ''}
                                                 <p class="text-gray-700 whitespace-pre-line leading-relaxed">${item.content}</p>
                                             </div>
                                         </div>
@@ -320,97 +260,47 @@
                                 `;
                             } 
                             else if (item.type === 'file') {
-                                const fileUrl = item.fileUrl ? `${API_BASE}${item.fileUrl}` : null;
+                                const fileUrl = item.fileUrl ? `${API_BASE}${item.fileUrl}` : '#';
                                 contentHtml += `
-                                    <div class="file-link bg-green-50 p-4 rounded-lg border border-green-200">
+                                    <div class="bg-green-50 p-4 rounded-xl border border-green-200">
                                         <div class="flex items-start space-x-3 space-x-reverse">
                                             <span class="text-green-600 text-xl mt-1">📎</span>
                                             <div class="flex-1">
-                                                <h5 class="font-semibold text-green-800 mb-2 text-lg">${item.name}</h5>
+                                                <h5 class="font-semibold text-green-800 mb-2">${item.name}</h5>
                                                 <p class="text-green-700 text-sm mb-3">${item.description || 'ملف مرفوع'}</p>
-                                                ${fileUrl ? `
-                                                    <div class="flex space-x-2 space-x-reverse">
-                                                        <a href="${fileUrl}" target="_blank" 
-                                                           class="inline-flex items-center bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-colors shadow-md">
-                                                            📥 تحميل الملف
-                                                        </a>
-                                                        ${item.size ? `<span class="text-green-600 text-sm bg-green-100 px-3 py-2 rounded">${item.size}</span>` : ''}
-                                                    </div>
-                                                ` : ''}
+                                                <div class="flex space-x-2 space-x-reverse">
+                                                    <a href="${fileUrl}" target="_blank" 
+                                                       class="inline-flex items-center bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                                                        📥 تحميل الملف
+                                                    </a>
+                                                    ${item.size ? `<span class="text-green-600 text-sm bg-green-100 px-3 py-2 rounded">${item.size}</span>` : ''}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 `;
                             }
                             else if (item.type === 'image') {
-                                const imageUrl = item.fileUrl ? `${API_BASE}${item.fileUrl}` : null;
+                                const imageUrl = item.fileUrl ? `${API_BASE}${item.fileUrl}` : '#';
                                 contentHtml += `
-                                    <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                                    <div class="bg-yellow-50 p-4 rounded-xl border border-yellow-200">
                                         <div class="flex items-start space-x-3 space-x-reverse">
                                             <span class="text-yellow-600 text-xl mt-1">🖼️</span>
                                             <div class="flex-1">
-                                                <h5 class="font-semibold text-yellow-800 mb-3 text-lg">${item.title}</h5>
+                                                <h5 class="font-semibold text-yellow-800 mb-3">${item.title}</h5>
                                                 ${imageUrl ? `
                                                     <div class="mb-3 text-center">
                                                         <img src="${imageUrl}" alt="${item.description || 'صورة'}" 
-                                                             class="rounded-lg max-w-full h-auto max-h-80 object-contain mx-auto border-2 border-yellow-300 shadow-lg">
+                                                             class="rounded-lg max-w-full h-auto max-h-60 object-contain mx-auto border-2 border-yellow-300">
                                                     </div>
                                                 ` : ''}
                                                 <p class="text-yellow-700 text-sm mb-3">${item.description || 'صورة مرفوعة'}</p>
                                                 ${imageUrl ? `
-                                                    <div class="flex space-x-2 space-x-reverse">
-                                                        <a href="${imageUrl}" target="_blank" 
-                                                           class="inline-flex items-center bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm transition-colors shadow-md">
-                                                            👁️ عرض بحجم كامل
-                                                        </a>
-                                                        ${item.size ? `<span class="text-yellow-600 text-sm bg-yellow-100 px-3 py-2 rounded">${item.size}</span>` : ''}
-                                                    </div>
-                                                ` : ''}
-                                            </div>
-                                        </div>
-                                    </div>
-                                `;
-                            }
-                            else if (item.type === 'pdf') {
-                                const pdfUrl = item.fileUrl ? `${API_BASE}${item.fileUrl}` : null;
-                                contentHtml += `
-                                    <div class="bg-red-50 p-4 rounded-lg border border-red-200">
-                                        <div class="flex items-start space-x-3 space-x-reverse">
-                                            <span class="text-red-600 text-xl mt-1">📄</span>
-                                            <div class="flex-1">
-                                                <h5 class="font-semibold text-red-800 mb-2 text-lg">${item.title}</h5>
-                                                <p class="text-red-700 text-sm mb-3">${item.description || 'ملف PDF'}</p>
-                                                ${pdfUrl ? `
-                                                    <div class="flex space-x-2 space-x-reverse">
-                                                        <a href="${pdfUrl}" target="_blank" 
-                                                           class="inline-flex items-center bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition-colors shadow-md">
-                                                            📥 تحميل PDF
-                                                        </a>
-                                                        ${item.size ? `<span class="text-red-600 text-sm bg-red-100 px-3 py-2 rounded">${item.size}</span>` : ''}
-                                                    </div>
-                                                ` : ''}
-                                            </div>
-                                        </div>
-                                    </div>
-                                `;
-                            }
-                            else if (item.type === 'link') {
-                                contentHtml += `
-                                    <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                                        <div class="flex items-start space-x-3 space-x-reverse">
-                                            <span class="text-purple-600 text-xl mt-1">🔗</span>
-                                            <div class="flex-1">
-                                                <h5 class="font-semibold text-purple-800 mb-2 text-lg">${item.title}</h5>
-                                                <p class="text-purple-700 text-sm mb-3">${item.description || 'رابط خارجي'}</p>
-                                                <div class="flex space-x-2 space-x-reverse">
-                                                    <a href="${item.url}" target="_blank" 
-                                                       class="inline-flex items-center bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm transition-colors shadow-md">
-                                                        🌐 زيارة الرابط
+                                                    <a href="${imageUrl}" target="_blank" 
+                                                       class="inline-flex items-center bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                                                        👁️ عرض بحجم كامل
                                                     </a>
-                                                    <span class="text-purple-600 text-sm bg-purple-100 px-3 py-2 rounded break-all max-w-xs">
-                                                        ${item.url}
-                                                    </span>
-                                                </div>
+                                                ` : ''}
                                             </div>
                                         </div>
                                     </div>
@@ -421,7 +311,7 @@
                         contentHtml += `</div>`;
                     } else {
                         contentHtml += `
-                            <div class="text-center py-6 bg-gray-50 rounded-lg">
+                            <div class="text-center py-6 bg-gray-50 rounded-xl">
                                 <div class="text-3xl mb-2">📭</div>
                                 <p class="text-gray-500 text-sm">لا يوجد محتوى في هذا القسم بعد.</p>
                             </div>
@@ -432,24 +322,23 @@
                 });
             }
 
-            contentHtml += `</div></div>`;
+            contentHtml += `</div>`;
             serviceContentContainer.innerHTML = contentHtml;
-            
-            // Scroll to top of content
-            serviceContentContainer.scrollTop = 0;
         }
 
         function backToServices() {
             const servicesContainer = document.getElementById('servicesContainer');
             const serviceContentContainer = document.getElementById('serviceContentContainer');
             const messagesArea = document.getElementById('messagesArea');
+            const fixedBackButton = document.getElementById('fixedBackButton');
+            const inputArea = document.querySelector('.border-t.border-gray-200.bg-gray-50');
             
             servicesContainer.classList.remove('hidden');
             serviceContentContainer.classList.add('hidden');
             messagesArea.classList.remove('hidden');
+            inputArea.classList.remove('hidden');
+            fixedBackButton.classList.add('hidden');
             currentView = 'services';
-            
-            addMessage('اختر خدمة أخرى إذا أردت 👆', false);
         }
 
         function useDefaultServiceResponse(service) {
@@ -469,10 +358,6 @@
 
         function showLoading(show) {
             document.getElementById('loadingIndicator').classList.toggle('hidden', !show);
-            if (show) {
-                document.getElementById('servicesContainer').classList.add('hidden');
-                document.getElementById('serviceContentContainer').classList.add('hidden');
-            }
         }
 
         function updateStatus(status) {
@@ -487,16 +372,16 @@
             if (isUser) {
                 messageDiv.innerHTML = `
                     <div class="flex justify-end">
-                        <div class="bg-blue-500 text-white rounded-lg p-3 max-w-xs">
-                            <p class="whitespace-pre-line">${text}</p>
+                        <div class="bg-blue-500 text-white rounded-2xl p-3 max-w-xs">
+                            <p class="whitespace-pre-line text-sm">${text}</p>
                         </div>
                     </div>
                 `;
             } else {
                 messageDiv.innerHTML = `
                     <div class="flex justify-start">
-                        <div class="bg-gray-100 rounded-lg p-3 max-w-xs">
-                            <p class="text-gray-800 whitespace-pre-line">${text}</p>
+                        <div class="bg-gray-100 rounded-2xl p-3 max-w-xs">
+                            <p class="text-gray-800 whitespace-pre-line text-sm">${text}</p>
                         </div>
                     </div>
                 `;
@@ -514,24 +399,18 @@
                 addMessage(message, true);
                 input.value = '';
                 
-                // رد ذكي بناءً على المحتوى
+                // Simulate AI response
                 setTimeout(() => {
                     let response = '';
                     
                     if (message.includes('شكر') || message.includes('thanks') || message.includes('thank')) {
                         response = 'العفو! 😊 نحن هنا لخدمتك. هل تحتاج مساعدة في شيء آخر؟';
                     } else if (message.includes('مرحب') || message.includes('hello') || message.includes('hi')) {
-                        response = 'مرحباً بك! 👋 اختر الخدمة التي تريدها من القائمة أعلاه.';
+                        response = 'مرحباً بك! 👋 كيف يمكنني مساعدتك اليوم؟';
                     } else if (message.includes('مساعدة') || message.includes('help') || message.includes('مساعده')) {
                         response = 'يمكنني مساعدتك في:\n• الاطلاع على الجدول الدراسي 📅\n• معرفة الواجبات 📝\n• تحميل الملفات 📁\n• معرفة الاختبارات 📋\n• وغيرها من الخدمات!\n\nاختر الخدمة المناسبة من الأعلى.';
                     } else {
-                        const responses = [
-                            'شكراً لك على رسالتك. يمكنني مساعدتك من خلال الخدمات المتاحة أعلاه. 📚',
-                            'هل تحتاج مساعدة في خدمة معينة؟ اختر من القائمة أعلى الصفحة. 👆',
-                            'رسالتك مهمة بالنسبة لنا. يمكنك استخدام الخدمات المتاحة للحصول على المعلومات المطلوبة. 📋',
-                            'أشكرك على التواصل! اختر الخدمة التي تريدها من القائمة لأعلى. 🎯'
-                        ];
-                        response = responses[Math.floor(Math.random() * responses.length)];
+                        response = 'شكراً على رسالتك! يمكنك استخدام الخدمات المتاحة أعلاه للحصول على المعلومات المطلوبة، أو طرح أسئلتك مباشرة هنا. 📚';
                     }
                     
                     addMessage(response, false);
@@ -548,13 +427,6 @@
         // Load data when page loads
         document.addEventListener('DOMContentLoaded', function() {
             loadData();
-            
-            // إضافة رسالة ترحيب إضافية بعد تحميل البيانات
-            setTimeout(() => {
-                if (currentView === 'services') {
-                    addMessage('يمكنك اختيار أي خدمة من القائمة أعلاه للحصول على المعلومات المطلوبة. 📚', false);
-                }
-            }, 2000);
         });
     </script>
 </body>
