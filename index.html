@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوت تلجرام - خدمة أولياء الأمور</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .message-bubble {
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .typing-indicator {
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-full">
+    <!-- Header -->
+    <div class="bg-blue-600 text-white p-4 shadow-lg">
+        <div class="flex items-center justify-between max-w-md mx-auto">
+            <div class="flex items-center space-x-3 space-x-reverse">
+                <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center">
+                    <span class="text-blue-600 text-xl">🤖</span>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg">بوت خدمة أولياء الأمور</h1>
+                    <p class="text-blue-200 text-sm" id="connectionStatus">متصل الآن</p>
+                </div>
+            </div>
+            <div class="text-blue-200">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Container -->
+    <div class="max-w-md mx-auto bg-white shadow-xl min-h-full flex flex-col">
+        <!-- Messages Area -->
+        <div id="messagesArea" class="flex-1 p-4 space-y-4 overflow-y-auto" style="height: 60%;">
+            <!-- Welcome Message -->
+            <div class="message-bubble">
+                <div class="bg-gray-100 rounded-lg p-3 max-w-xs">
+                    <p class="text-gray-800">مرحباً بك في بوت خدمة أولياء الأمور! 👋</p>
+                    <p class="text-gray-600 text-sm mt-1">جاري تحميل البيانات...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loadingIndicator" class="flex justify-center p-4">
+            <div class="typing-indicator bg-blue-500 text-white rounded-lg p-3">
+                <p>🔄 جاري تحميل البيانات من الخادم...</p>
+            </div>
+        </div>
+
+        <!-- Services Container -->
+        <div id="servicesContainer" class="p-4 hidden">
+            <!-- Services will be added here dynamically -->
+        </div>
+
+        <!-- Input Area -->
+        <div class="border-t bg-gray-50 p-4">
+            <div class="flex items-center space-x-2 space-x-reverse">
+                <input 
+                    type="text" 
+                    id="messageInput" 
+                    placeholder="اكتب رسالتك هنا..."
+                    class="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:border-blue-500"
+                    onkeypress="handleKeyPress(event)"
+                >
+                <button 
+                    onclick="sendMessage()" 
+                    class="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2 transition-colors"
+                >
+                    <svg class="w-5 h-5 transform rotate-180" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStudent = null;
+        let botData = null;
+        const API_URL = '/api/data';
+        
+        // Initialize Telegram Web App
+        if (window.Telegram && Telegram.WebApp) {
+            Telegram.WebApp.ready();
+            Telegram.WebApp.expand();
+        }
+
+        // Load data from server
+        async function loadData() {
+            showLoading(true);
+            updateStatus('جاري الاتصال بالخادم...');
+            
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) {
+                    throw new Error('فشل في جلب البيانات');
+                }
+                
+                botData = await response.json();
+                updateStatus('✅ متصل - البيانات محدثة');
+                showLoading(false);
+                displayServices();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                updateStatus('❌ خطأ في الاتصال');
+                showLoading(false);
+                useDefaultData();
+            }
+        }
+
+        function useDefaultData() {
+            botData = {
+                services: {
+                    'schedule': { name: 'الجدول الدراسي', sections: [] },
+                    'homework': { name: 'الواجبات المنزلية', sections: [] },
+                    'ai': { name: 'ربوت الذكاء الاصطناعي', sections: [] },
+                    'broadcast': { name: 'البروكاست', sections: [] },
+                    'programs': { name: 'البرامج والمسابقات', sections: [] },
+                    'files': { name: 'الملفات المرسلة', sections: [] },
+                    'exams': { name: 'الاختبارات', sections: [] },
+                    'contact': { name: 'تواصل معنا', sections: [] }
+                }
+            };
+            displayServices();
+        }
+
+        function displayServices() {
+            const servicesContainer = document.getElementById('servicesContainer');
+            servicesContainer.innerHTML = '';
+            servicesContainer.classList.remove('hidden');
+
+            let servicesHtml = `
+                <div class="message-bubble">
+                    <div class="bg-gray-100 rounded-lg p-3">
+                        <p class="text-gray-800 mb-3">اختر الخدمة المطلوبة:</p>
+                        <div class="grid grid-cols-2 gap-2">
+            `;
+
+            const serviceButtons = {
+                'schedule': { text: '📅 الجدول الدراسي', color: 'bg-purple-500 hover:bg-purple-600' },
+                'homework': { text: '📝 الواجبات', color: 'bg-red-500 hover:bg-red-600' },
+                'ai': { text: '🤖 ربوت الذكاء الاصطناعي', color: 'bg-cyan-500 hover:bg-cyan-600' },
+                'broadcast': { text: '📢 البروكاست', color: 'bg-green-500 hover:bg-green-600' },
+                'programs': { text: '🏆 البرامج والمسابقات', color: 'bg-orange-500 hover:bg-orange-600' },
+                'files': { text: '📁 الملفات المرسلة', color: 'bg-blue-500 hover:bg-blue-600' },
+                'exams': { text: '📋 الاختبارات', color: 'bg-pink-500 hover:bg-pink-600' },
+                'contact': { text: '📞 تواصل معنا', color: 'bg-indigo-500 hover:bg-indigo-600' }
+            };
+
+            for (const [serviceKey, buttonInfo] of Object.entries(serviceButtons)) {
+                const service = botData.services[serviceKey];
+                const serviceName = service ? service.name : buttonInfo.text;
+                
+                servicesHtml += `
+                    <button onclick="selectService('${serviceKey}')" class="${buttonInfo.color} text-white p-2 rounded-lg text-sm transition-colors">
+                        ${serviceName}
+                    </button>
+                `;
+            }
+
+            servicesHtml += `
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            servicesContainer.innerHTML = servicesHtml;
+        }
+
+        async function selectService(service) {
+            const serviceInfo = botData.services[service];
+            addMessage(serviceInfo.name, true);
+            
+            showLoading(true);
+            
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error('فشل في جلب البيانات');
+                
+                const data = await response.json();
+                const serviceData = data.services[service];
+                
+                showLoading(false);
+                
+                if (serviceData && serviceData.sections && serviceData.sections.length > 0) {
+                    let responseText = `**${serviceData.name}**\n\n`;
+                    
+                    serviceData.sections.forEach(section => {
+                        responseText += `📂 **${section.name}**\n`;
+                        if (section.description && section.description !== 'لا يوجد وصف') {
+                            responseText += `${section.description}\n`;
+                        }
+                        
+                        if (section.content && section.content.length > 0) {
+                            section.content.forEach(item => {
+                                if (item.type === 'text') {
+                                    responseText += `\n📄 ${item.content}\n`;
+                                } else if (item.type === 'file') {
+                                    responseText += `\n📎 ${item.name}`;
+                                    if (item.fileUrl) {
+                                        responseText += `\n🔗 ${window.location.origin}${item.fileUrl}\n`;
+                                    }
+                                } else if (item.type === 'link') {
+                                    responseText += `\n🔗 ${item.title}\n${item.url}\n`;
+                                } else if (item.type === 'image') {
+                                    responseText += `\n🖼️ ${item.title}`;
+                                    if (item.fileUrl) {
+                                        responseText += `\n🔗 ${window.location.origin}${item.fileUrl}\n`;
+                                    }
+                                } else if (item.type === 'pdf') {
+                                    responseText += `\n📄 ${item.title}`;
+                                    if (item.fileUrl) {
+                                        responseText += `\n🔗 ${window.location.origin}${item.fileUrl}\n`;
+                                    }
+                                }
+                            });
+                        } else {
+                            responseText += `\n⚠️ لا يوجد محتوى في هذا القسم\n`;
+                        }
+                        responseText += `\n────────────\n`;
+                    });
+                    
+                    addMessage(responseText || 'لا توجد بيانات متاحة حالياً', false);
+                } else {
+                    useDefaultServiceResponse(service);
+                }
+                
+            } catch (error) {
+                showLoading(false);
+                useDefaultServiceResponse(service);
+            }
+        }
+
+        function useDefaultServiceResponse(service) {
+            const defaultResponses = {
+                'schedule': 'إليك الجدول الدراسي لهذا الأسبوع:\n\n📚 الأحد: رياضيات، عربي، علوم\n📚 الاثنين: إنجليزي، تاريخ، رياضة\n📚 الثلاثاء: علوم، جغرافيا، فنون\n📚 الأربعاء: رياضيات، إنجليزي، تربية إسلامية\n📚 الخميس: علوم، عربي، أنشطة',
+                'homework': 'الواجبات المطلوبة:\n\n📝 رياضيات: حل التمارين ص 45-47\n📝 العربي: كتابة موضوع تعبير\n📝 العلوم: قراءة الفصل الثالث\n📝 الإنجليزي: حفظ المفردات الجديدة\n\n📅 موعد التسليم: غداً',
+                'ai': '🤖 مرحباً! أنا مساعدك الذكي\n\nيمكنني مساعدتك في:\n• الإجابة على الأسئلة التعليمية\n• شرح المفاهيم الصعبة\n• مساعدة في حل الواجبات\n• تقديم نصائح دراسية\n\nما الذي تريد أن تسأل عنه؟',
+                'broadcast': '📢 آخر الإعلانات والأخبار:\n\n🔔 تذكير: اختبار الرياضيات يوم الأربعاء\n🔔 إجازة نصف العام تبدأ 15 فبراير\n🔔 اجتماع أولياء الأمور يوم الخميس\n🔔 تم تأجيل رحلة الصف السادس\n\n📅 آخر تحديث: اليوم 2:30 م',
+                'programs': '🏆 البرامج والمسابقات الحالية:\n\n🎯 مسابقة القرآن الكريم - التسجيل مفتوح\n🎯 برنامج المواهب الطلابية - 20 فبراير\n🎯 مسابقة الرياضيات - المرحلة النهائية\n🎯 معرض العلوم السنوي - مارس 2024\n\nللتسجيل أو الاستفسار اضغط /register',
+                'files': '📁 الملفات المتاحة للتحميل:\n\n📄 جدول الاختبارات النهائية.pdf\n📄 قائمة الكتب المطلوبة.pdf\n📄 نموذج طلب إجازة.pdf\n📄 دليل ولي الأمر.pdf\n📄 التقويم الدراسي 2024.pdf\n\nلتحميل أي ملف، اكتب اسمه في الرسالة',
+                'exams': '📋 جدول الاختبارات القادمة:\n\n📝 الرياضيات: الأربعاء 10 فبراير - 8:00 ص\n📝 اللغة العربية: الخميس 11 فبراير - 8:00 ص\n📝 العلوم: الأحد 14 فبراير - 8:00 ص\n📝 الإنجليزي: الاثنين 15 فبراير - 8:00 ص\n\n⏰ مدة كل اختبار: ساعتان',
+                'contact': '📞 معلومات التواصل:\n\n📱 الهاتف: 011-234-5678\n📧 البريد: info@school.edu.sa\n🌐 الموقع: www.school.edu.sa\n📍 العنوان: شارع التعليم، الرياض\n\n🕐 ساعات العمل:\nالأحد - الخميس: 7:00 ص - 2:00 م\n\nيمكنك أيضاً حجز موعد مع الإدارة'
+            };
+            
+            addMessage(defaultResponses[service] || 'الخدمة غير متاحة حالياً', false);
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingIndicator').classList.toggle('hidden', !show);
+            document.getElementById('servicesContainer').classList.toggle('hidden', show);
+        }
+
+        function updateStatus(status) {
+            document.getElementById('connectionStatus').textContent = status;
+        }
+
+        function addMessage(text, isUser) {
+            const messagesArea = document.getElementById('messagesArea');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message-bubble';
+            
+            if (isUser) {
+                messageDiv.innerHTML = `
+                    <div class="flex justify-end">
+                        <div class="bg-blue-500 text-white rounded-lg p-3 max-w-xs">
+                            <p>${text}</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <div class="bg-gray-100 rounded-lg p-3 max-w-xs">
+                        <p class="text-gray-800 whitespace-pre-line">${text}</p>
+                    </div>
+                `;
+            }
+            
+            messagesArea.appendChild(messageDiv);
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (message) {
+                addMessage(message, true);
+                input.value = '';
+                
+                setTimeout(() => {
+                    const responses = [
+                        'شكراً لك على رسالتك. سأقوم بمراجعة طلبك والرد عليك قريباً.',
+                        'تم استلام رسالتك بنجاح. هل تحتاج لمساعدة إضافية؟',
+                        'أشكرك على التواصل معنا. سيتم الرد على استفسارك في أقرب وقت.',
+                        'رسالتك مهمة بالنسبة لنا. سنتواصل معك خلال 24 ساعة.'
+                    ];
+                    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                    addMessage(randomResponse, false);
+                }, 1000);
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // Load data when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+        });
+    </script>
+</body>
+</html>
