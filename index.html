@@ -251,15 +251,34 @@
             document.head.appendChild(script);
         }
 
-        // دوال مساعدة للصور والروابط
+        // دالة محسنة للتحقق من صحة الروابط
+        function isValidUrl(url) {
+            if (!url || url === 'undefined' || url.includes('undefined') || url.trim() === '') {
+                return false;
+            }
+            
+            const cleanUrl = url.toString().trim();
+            
+            // قبول الروابط التي تبدأ بـ http أو https
+            if (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
+                return true;
+            }
+            
+            return false;
+        }
+
+        // تحسين دالة openImageModal
         function openImageModal(imageUrl) {
-            if (!imageUrl || imageUrl === 'undefined' || imageUrl.includes('undefined')) {
+            if (!isValidUrl(imageUrl)) {
                 console.log('رابط الصورة غير صالح:', imageUrl);
+                addMessage('⚠️ رابط الصورة غير صالح أو غير متاح حالياً', false);
                 return;
             }
+            
             currentImageUrl = imageUrl;
             const modal = document.getElementById('imageModal');
             const modalImage = document.getElementById('modalImage');
+            
             if (modal && modalImage) {
                 modalImage.src = imageUrl;
                 modal.classList.remove('hidden');
@@ -274,27 +293,25 @@
         }
 
         function downloadCurrentImage() {
-            if (currentImageUrl && currentImageUrl !== 'undefined' && !currentImageUrl.includes('undefined')) {
-                downloadImage(currentImageUrl, 'صورة');
+            if (currentImageUrl && isValidUrl(currentImageUrl)) {
+                downloadImage(currentImageUrl, 'صورة المدرسة.jpg');
             }
         }
 
+        // تحسين دالة downloadImage
         function downloadImage(url, filename) {
-            if (!url || url === 'undefined' || url.includes('undefined')) {
+            if (!isValidUrl(url)) {
                 console.log('رابط التحميل غير صالح:', url);
+                addMessage('⚠️ رابط التحميل غير صالح', false);
                 return;
             }
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename || 'صورة';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
-
-        // دالة مساعدة للتحقق من الروابط
-        function isValidUrl(url) {
-            return url && url !== 'undefined' && !url.includes('undefined') && (url.startsWith('http') || url.startsWith('https'));
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename || 'ملف';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         // Initialize Telegram Web App بشكل آمن
@@ -475,7 +492,6 @@
             });
         }
 
-        // باقي الدوال تبقى كما هي...
         function selectService(serviceKey) {
             currentService = serviceKey;
             const service = botData.services[serviceKey];
@@ -550,6 +566,7 @@
             showServiceContent(serviceKey, sectionIndex);
         }
 
+        // دالة محسنة لعرض محتوى الخدمة مع إصلاح مشكلة الملفات والصور والروابط
         function showServiceContent(serviceKey, sectionIndex) {
             hideAllContainers();
             document.getElementById('contentContainer').classList.remove('hidden');
@@ -602,30 +619,38 @@
                                             <a href="${fileUrl}" target="_blank" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs transition-colors">
                                                 معاينة
                                             </a>
-                                            <a href="${fileUrl}" download="${fileName}" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors">
+                                            <button onclick="downloadImage('${fileUrl}', '${fileName}')" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors">
                                                 تحميل
-                                            </a>
+                                            </button>
                                         </div>
                                     </div>
                                 `;
                             }
                         } else if (item.type === 'image') {
-                            const imageUrl = item.imageUrl || item.url;
+                            const imageUrl = item.imageUrl || item.url || item.fileUrl;
                             if (isValidUrl(imageUrl)) {
                                 hasValidContent = true;
-                                const imageTitle = item.title || 'صورة';
+                                const imageTitle = item.title || item.name || 'صورة';
                                 contentItemsHtml += `
-                                    <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2">
-                                        <p class="text-gray-800 font-medium text-xs mb-2">${imageTitle}</p>
-                                        <img src="${imageUrl}" alt="${imageTitle}" class="w-full h-auto rounded-lg cursor-pointer mb-2" onclick="openImageModal('${imageUrl}')">
-                                        <div class="flex justify-center space-x-2 space-x-reverse">
-                                            <button onclick="openImageModal('${imageUrl}')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs transition-colors">
-                                                🔍 تكبير الصورة
-                                            </button>
-                                            <button onclick="downloadImage('${imageUrl}', '${imageTitle}')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs transition-colors">
-                                                📥 حفظ الصورة
-                                            </button>
+                                    <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2 file-item">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <div class="flex items-center">
+                                                <span class="ml-2 text-lg">🖼️</span>
+                                                <div>
+                                                    <p class="text-gray-800 font-medium text-xs">${imageTitle}</p>
+                                                    <p class="text-gray-500 text-xs">صورة</p>
+                                                </div>
+                                            </div>
+                                            <div class="flex space-x-1 space-x-reverse">
+                                                <button onclick="openImageModal('${imageUrl}')" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs transition-colors">
+                                                    معاينة
+                                                </button>
+                                                <button onclick="downloadImage('${imageUrl}', '${imageTitle}')" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors">
+                                                    تحميل
+                                                </button>
+                                            </div>
                                         </div>
+                                        <img src="${imageUrl}" alt="${imageTitle}" class="w-full rounded-lg cursor-pointer" onclick="openImageModal('${imageUrl}')">
                                     </div>
                                 `;
                             }
