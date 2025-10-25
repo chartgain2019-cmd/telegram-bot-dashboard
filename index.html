@@ -4,13 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>بوت تلجرام - خدمة أولياء الأمور</title>
-    <!-- استخدام Tailwind CSS مستقر -->
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <!-- JotForm Chat Bot Script -->
     <script src='https://cdn.jotfor.ms/agent/embedjs/019932f8eeb67de397162a0d8c2d541451fe/embed.js'></script>
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -33,6 +30,14 @@
         .chat-container {
             height: calc(100vh - 80px);
             border-radius: 20px 20px 0 0;
+        }
+        #jotform-chat-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            width: 300px;
+            height: 500px;
         }
         .typing-dots {
             display: flex;
@@ -60,35 +65,9 @@
         #imageModal {
             display: none;
         }
-        #imageModal img { 
-            max-width: 100%; 
-            max-height: 70vh; 
+        #imageModal.show {
+            display: flex;
         }
-        
-        /* ألوان مخصصة للأزرار */
-        .btn-purple { background-color: #8B5CF6; }
-        .btn-purple:hover { background-color: #7C3AED; }
-        
-        .btn-red { background-color: #EF4444; }
-        .btn-red:hover { background-color: #DC2626; }
-        
-        .btn-cyan { background-color: #06B6D4; }
-        .btn-cyan:hover { background-color: #0891B2; }
-        
-        .btn-green { background-color: #10B981; }
-        .btn-green:hover { background-color: #059669; }
-        
-        .btn-orange { background-color: #F59E0B; }
-        .btn-orange:hover { background-color: #D97706; }
-        
-        .btn-blue { background-color: #3B82F6; }
-        .btn-blue:hover { background-color: #2563EB; }
-        
-        .btn-pink { background-color: #EC4899; }
-        .btn-pink:hover { background-color: #DB2777; }
-        
-        .btn-indigo { background-color: #6366F1; }
-        .btn-indigo:hover { background-color: #4F46E5; }
     </style>
 </head>
 <body class="min-h-screen">
@@ -164,9 +143,15 @@
             </div>
         </div>
 
-        <!-- باقي الحاويات -->
-        <div id="sectionsContainer" class="p-3 bg-gray-50 hidden"></div>
-        <div id="contentContainer" class="p-3 bg-gray-50 hidden"></div>
+        <!-- Sections Container -->
+        <div id="sectionsContainer" class="p-3 bg-gray-50 hidden">
+            <!-- الأقسام سيتم إضافتها هنا -->
+        </div>
+
+        <!-- Content Container -->
+        <div id="contentContainer" class="p-3 bg-gray-50 hidden">
+            <!-- المحتوى سيتم إضافته هنا -->
+        </div>
 
         <!-- Input Area -->
         <div class="border-t bg-white p-3">
@@ -215,62 +200,10 @@
         let currentSection = null;
         let currentImageUrl = null;
 
-        // دوال مساعدة للصور والروابط
-        function openImageModal(imageUrl) {
-            if (!imageUrl || imageUrl === 'undefined' || imageUrl.includes('undefined')) {
-                console.log('رابط الصورة غير صالح:', imageUrl);
-                return;
-            }
-            currentImageUrl = imageUrl;
-            const modal = document.getElementById('imageModal');
-            const modalImage = document.getElementById('modalImage');
-            if (modal && modalImage) {
-                modalImage.src = imageUrl;
-                modal.classList.remove('hidden');
-            }
-        }
-
-        function closeImageModal() {
-            const modal = document.getElementById('imageModal');
-            if (modal) {
-                modal.classList.add('hidden');
-            }
-        }
-
-        function downloadCurrentImage() {
-            if (currentImageUrl && currentImageUrl !== 'undefined' && !currentImageUrl.includes('undefined')) {
-                downloadImage(currentImageUrl, 'صورة');
-            }
-        }
-
-        function downloadImage(url, filename) {
-            if (!url || url === 'undefined' || url.includes('undefined')) {
-                console.log('رابط التحميل غير صالح:', url);
-                return;
-            }
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename || 'صورة';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
-
-        // دالة مساعدة للتحقق من الروابط
-        function isValidUrl(url) {
-            return url && url !== 'undefined' && !url.includes('undefined') && url.startsWith('http');
-        }
-
-        // Initialize Telegram Web App بشكل آمن
-        function initTelegramWebApp() {
-            if (window.Telegram && Telegram.WebApp) {
-                try {
-                    Telegram.WebApp.ready();
-                    Telegram.WebApp.expand();
-                } catch (error) {
-                    console.log('Telegram Web App غير متاح');
-                }
-            }
+        // Initialize Telegram Web App
+        if (window.Telegram && Telegram.WebApp) {
+            Telegram.WebApp.ready();
+            Telegram.WebApp.expand();
         }
 
         // Load data from server
@@ -290,7 +223,7 @@
                 showMainServices();
                 
             } catch (error) {
-                console.log('استخدام البيانات المحلية:', error);
+                console.error('Error:', error);
                 updateStatus('❌ خطأ في الاتصال - استخدام بيانات محلية');
                 showLoading(false);
                 useDefaultData();
@@ -354,38 +287,31 @@
         }
 
         function updateStatus(status) {
-            const element = document.getElementById('connectionStatus');
-            if (element) element.textContent = status;
+            document.getElementById('connectionStatus').textContent = status;
         }
 
         function showLoading(show) {
-            const element = document.getElementById('loadingIndicator');
-            if (element) element.classList.toggle('hidden', !show);
+            document.getElementById('loadingIndicator').classList.toggle('hidden', !show);
         }
 
-        // إظهار الخدمات الرئيسية
+        // إظهار الخدمات الرئيسية (المستوى 1)
         function showMainServices() {
             hideAllContainers();
-            const servicesContainer = document.getElementById('servicesContainer');
-            const navigationHeader = document.getElementById('navigationHeader');
-            
-            if (servicesContainer) servicesContainer.classList.remove('hidden');
-            if (navigationHeader) navigationHeader.classList.add('hidden');
+            document.getElementById('servicesContainer').classList.remove('hidden');
+            document.getElementById('navigationHeader').classList.add('hidden');
             
             const servicesGrid = document.getElementById('servicesGrid');
-            if (!servicesGrid) return;
-            
             servicesGrid.innerHTML = '';
 
             const serviceButtons = [
-                { key: 'schedule', name: 'الجدول الدراسي', icon: '📅', colorClass: 'btn-purple' },
-                { key: 'homework', name: 'الواجبات المنزلية', icon: '📝', colorClass: 'btn-red' },
-                { key: 'ai', name: 'المساعد الذكي', icon: '🤖', colorClass: 'btn-cyan' },
-                { key: 'broadcast', name: 'البروكاست', icon: '📢', colorClass: 'btn-green' },
-                { key: 'programs', name: 'البرامج والمسابقات', icon: '🏆', colorClass: 'btn-orange' },
-                { key: 'files', name: 'الملفات المرسلة', icon: '📁', colorClass: 'btn-blue' },
-                { key: 'exams', name: 'الاختبارات', icon: '📋', colorClass: 'btn-pink' },
-                { key: 'contact', name: 'تواصل معنا', icon: '📞', colorClass: 'btn-indigo' }
+                { key: 'schedule', name: 'الجدول الدراسي', icon: '📅', color: 'from-purple-500 to-indigo-500' },
+                { key: 'homework', name: 'الواجبات المنزلية', icon: '📝', color: 'from-red-500 to-pink-500' },
+                { key: 'ai', name: 'المساعد الذكي', icon: '🤖', color: 'from-cyan-500 to-blue-500' },
+                { key: 'broadcast', name: 'البروكاست', icon: '📢', color: 'from-green-500 to-teal-500' },
+                { key: 'programs', name: 'البرامج والمسابقات', icon: '🏆', color: 'from-orange-500 to-amber-500' },
+                { key: 'files', name: 'الملفات المرسلة', icon: '📁', color: 'from-blue-500 to-cyan-500' },
+                { key: 'exams', name: 'الاختبارات', icon: '📋', color: 'from-pink-500 to-rose-500' },
+                { key: 'contact', name: 'تواصل معنا', icon: '📞', color: 'from-indigo-500 to-purple-500' }
             ];
 
             serviceButtons.forEach(button => {
@@ -393,17 +319,18 @@
                 if (!service) return;
                 
                 const buttonElement = document.createElement('button');
-                buttonElement.className = `${button.colorClass} text-white p-2 rounded-lg text-xs font-medium transition-all service-card flex flex-col items-center justify-center h-14 shadow-md`;
+                buttonElement.className = `bg-gradient-to-r ${button.color} hover:from-${button.color.split('-')[1]}-600 hover:to-${button.color.split('-')[3]}-600 text-white p-2 rounded-lg text-xs font-medium transition-all service-card flex flex-col items-center justify-center h-14`;
                 buttonElement.innerHTML = `
                     <span class="text-sm mb-1">${service.icon || button.icon}</span>
-                    <span class="text-xs font-bold">${service.name}</span>
+                    <span class="text-xs">${service.name}</span>
                 `;
                 buttonElement.onclick = () => selectService(button.key);
                 servicesGrid.appendChild(buttonElement);
             });
         }
 
-        function selectService(serviceKey) {
+        // اختيار خدمة (المستوى 2)
+        async function selectService(serviceKey) {
             currentService = serviceKey;
             const service = botData.services[serviceKey];
             
@@ -415,23 +342,40 @@
             if (service.sections && service.sections.length > 0) {
                 showServiceSections(serviceKey);
             } else {
-                showServiceContent(serviceKey, null);
+                // جلب البيانات الحية من الخادم
+                showLoading(true);
+                try {
+                    const response = await fetch(API_URL);
+                    if (response.ok) {
+                        const liveData = await response.json();
+                        const liveService = liveData.services[serviceKey];
+                        if (liveService && liveService.sections) {
+                            service.sections = liveService.sections;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error fetching service data:', error);
+                }
+                showLoading(false);
+                
+                if (service.sections && service.sections.length > 0) {
+                    showServiceSections(serviceKey);
+                } else {
+                    showServiceContent(serviceKey, null);
+                }
             }
         }
 
+        // إظهار أقسام الخدمة (المستوى 2)
         function showServiceSections(serviceKey) {
             hideAllContainers();
             document.getElementById('sectionsContainer').classList.remove('hidden');
             document.getElementById('navigationHeader').classList.remove('hidden');
             document.getElementById('backToServices').classList.remove('hidden');
             document.getElementById('backToSections').classList.add('hidden');
-            
-            const currentLevel = document.getElementById('currentLevel');
-            if (currentLevel) currentLevel.textContent = botData.services[serviceKey].name;
+            document.getElementById('currentLevel').textContent = botData.services[serviceKey].name;
             
             const sectionsContainer = document.getElementById('sectionsContainer');
-            if (!sectionsContainer) return;
-            
             sectionsContainer.innerHTML = '';
 
             const service = botData.services[serviceKey];
@@ -455,9 +399,9 @@
 
             service.sections.forEach((section, index) => {
                 sectionsHtml += `
-                    <button onclick="selectSection('${serviceKey}', ${index})" class="btn-purple text-white p-2 rounded-lg text-xs font-medium transition-all service-card flex flex-col items-center justify-center h-14 shadow-md">
+                    <button onclick="selectSection('${serviceKey}', ${index})" class="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white p-2 rounded-lg text-xs font-medium transition-all service-card flex flex-col items-center justify-center h-14">
                         <span class="text-sm mb-1">📁</span>
-                        <span class="text-xs font-bold">${section.name}</span>
+                        <span class="text-xs">${section.name}</span>
                     </button>
                 `;
             });
@@ -471,12 +415,34 @@
             sectionsContainer.innerHTML = sectionsHtml;
         }
 
-        function selectSection(serviceKey, sectionIndex) {
+        // اختيار قسم (المستوى 3)
+        async function selectSection(serviceKey, sectionIndex) {
             currentService = serviceKey;
             currentSection = sectionIndex;
+            
+            const service = botData.services[serviceKey];
+            const section = service.sections[sectionIndex];
+            
+            // جلب المحتوى الحقيقي من الخادم
+            showLoading(true);
+            try {
+                const response = await fetch(API_URL);
+                if (response.ok) {
+                    const liveData = await response.json();
+                    const liveService = liveData.services[serviceKey];
+                    if (liveService && liveService.sections && liveService.sections[sectionIndex]) {
+                        section.content = liveService.sections[sectionIndex].content;
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching section content:', error);
+            }
+            showLoading(false);
+            
             showServiceContent(serviceKey, sectionIndex);
         }
 
+        // إظهار محتوى الخدمة (المستوى 3)
         function showServiceContent(serviceKey, sectionIndex) {
             hideAllContainers();
             document.getElementById('contentContainer').classList.remove('hidden');
@@ -489,8 +455,7 @@
             
             if (sectionIndex !== null) {
                 const section = service.sections[sectionIndex];
-                const currentLevel = document.getElementById('currentLevel');
-                if (currentLevel) currentLevel.textContent = `${service.name} - ${section.name}`;
+                document.getElementById('currentLevel').textContent = `${service.name} - ${section.name}`;
                 
                 contentHtml = `
                     <div class="message-bubble">
@@ -500,93 +465,77 @@
                 `;
                 
                 if (section.content && section.content.length > 0) {
-                    let hasValidContent = false;
-                    let contentItemsHtml = '';
-                    
                     section.content.forEach(item => {
                         if (item.type === 'text') {
-                            hasValidContent = true;
-                            contentItemsHtml += `
+                            contentHtml += `
                                 <div class="bg-white p-3 rounded-lg border border-gray-200 mb-2">
                                     <p class="text-gray-800 whitespace-pre-line text-xs">${item.content}</p>
                                 </div>
                             `;
                         } else if (item.type === 'pdf' || item.type === 'file') {
                             const fileUrl = item.fileUrl || item.url;
-                            if (isValidUrl(fileUrl)) {
-                                hasValidContent = true;
-                                contentItemsHtml += `
-                                    <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2 flex items-center justify-between file-item">
+                            contentHtml += `
+                                <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2 flex items-center justify-between file-item">
+                                    <div class="flex items-center">
+                                        <span class="ml-2 text-lg">📄</span>
+                                        <div>
+                                            <p class="text-gray-800 font-medium text-xs">${item.title || item.name}</p>
+                                            <p class="text-gray-500 text-xs">ملف PDF</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex space-x-1 space-x-reverse">
+                                        <a href="${fileUrl}" target="_blank" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs transition-colors">
+                                            معاينة
+                                        </a>
+                                        <a href="${fileUrl}" download class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors">
+                                            تحميل
+                                        </a>
+                                    </div>
+                                </div>
+                            `;
+                        } else if (item.type === 'image') {
+                            const fileUrl = item.fileUrl || item.url;
+                            contentHtml += `
+                                <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2 file-item">
+                                    <div class="flex items-center justify-between mb-2">
                                         <div class="flex items-center">
-                                            <span class="ml-2 text-lg">📄</span>
+                                            <span class="ml-2 text-lg">🖼️</span>
                                             <div>
-                                                <p class="text-gray-800 font-medium text-xs">${item.title || item.name || 'ملف'}</p>
-                                                <p class="text-gray-500 text-xs">ملف PDF</p>
+                                                <p class="text-gray-800 font-medium text-xs">${item.title || item.name}</p>
+                                                <p class="text-gray-500 text-xs">صورة</p>
                                             </div>
                                         </div>
                                         <div class="flex space-x-1 space-x-reverse">
-                                            <a href="${fileUrl}" target="_blank" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs transition-colors">
+                                            <button onclick="openImageModal('${fileUrl}')" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs transition-colors">
                                                 معاينة
-                                            </a>
-                                            <a href="${fileUrl}" download="${item.title || 'file'}" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors">
+                                            </button>
+                                            <a href="${fileUrl}" download class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors">
                                                 تحميل
                                             </a>
                                         </div>
                                     </div>
-                                `;
-                            }
-                        } else if (item.type === 'image') {
-                            const imageUrl = item.imageUrl || item.url;
-                            if (isValidUrl(imageUrl)) {
-                                hasValidContent = true;
-                                contentItemsHtml += `
-                                    <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2">
-                                        <p class="text-gray-800 font-medium text-xs mb-2">${item.title || 'صورة'}</p>
-                                        <img src="${imageUrl}" alt="${item.title || 'صورة'}" class="w-full h-auto rounded-lg cursor-pointer mb-2" onclick="openImageModal('${imageUrl}')">
-                                        <div class="flex justify-center space-x-2 space-x-reverse">
-                                            <button onclick="openImageModal('${imageUrl}')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs transition-colors">
-                                                🔍 تكبير الصورة
-                                            </button>
-                                            <button onclick="downloadImage('${imageUrl}', '${item.title || 'image'}')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs transition-colors">
-                                                📥 حفظ الصورة
-                                            </button>
-                                        </div>
-                                    </div>
-                                `;
-                            }
+                                    <img src="${fileUrl}" alt="${item.title || item.name}" class="w-full rounded-lg cursor-pointer" onclick="openImageModal('${fileUrl}')">
+                                </div>
+                            `;
                         } else if (item.type === 'link') {
-                            const linkUrl = item.linkUrl || item.url;
-                            if (isValidUrl(linkUrl)) {
-                                hasValidContent = true;
-                                contentItemsHtml += `
-                                    <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2 flex items-center justify-between file-item">
+                            contentHtml += `
+                                <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2 file-item">
+                                    <div class="flex items-center justify-between">
                                         <div class="flex items-center">
                                             <span class="ml-2 text-lg">🔗</span>
                                             <div>
-                                                <p class="text-gray-800 font-medium text-xs">${item.title || item.name || 'رابط'}</p>
-                                                <p class="text-gray-500 text-xs">رابط خارجي</p>
+                                                <p class="text-gray-800 font-medium text-xs">${item.title}</p>
+                                                <p class="text-gray-500 text-xs">رابط</p>
                                             </div>
                                         </div>
-                                        <div class="flex space-x-1 space-x-reverse">
-                                            <a href="${linkUrl}" target="_blank" class="bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs transition-colors">
-                                                فتح الرابط
-                                            </a>
-                                        </div>
+                                        <a href="${item.url}" target="_blank" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs transition-colors">
+                                            فتح الرابط
+                                        </a>
                                     </div>
-                                `;
-                            }
+                                </div>
+                            `;
                         }
                     });
-                    
-                    if (hasValidContent) {
-                        contentHtml += contentItemsHtml;
-                    } else {
-                        contentHtml += `
-                            <div class="bg-white p-3 rounded-lg border border-gray-200">
-                                <p class="text-gray-800 text-sm">لا يوجد محتوى متاح حالياً في هذا القسم.</p>
-                            </div>
-                        `;
-                    }
                 } else {
                     contentHtml += `
                         <div class="bg-white p-3 rounded-lg border border-gray-200">
@@ -597,8 +546,7 @@
                 
                 contentHtml += `</div></div>`;
             } else {
-                const currentLevel = document.getElementById('currentLevel');
-                if (currentLevel) currentLevel.textContent = service.name;
+                document.getElementById('currentLevel').textContent = service.name;
                 const defaultContent = getDefaultServiceContent(serviceKey);
                 contentHtml = `
                     <div class="message-bubble">
@@ -612,26 +560,48 @@
                 `;
             }
             
-            const contentContainer = document.getElementById('contentContainer');
-            if (contentContainer) contentContainer.innerHTML = contentHtml;
+            document.getElementById('contentContainer').innerHTML = contentHtml;
         }
 
+        // فتح معاينة الصورة
+        function openImageModal(imageUrl) {
+            currentImageUrl = imageUrl;
+            document.getElementById('modalImage').src = imageUrl;
+            document.getElementById('imageModal').classList.remove('hidden');
+        }
+
+        // إغلاق معاينة الصورة
+        function closeImageModal() {
+            document.getElementById('imageModal').classList.add('hidden');
+            currentImageUrl = null;
+        }
+
+        // تحميل الصورة الحالية
+        function downloadCurrentImage() {
+            if (currentImageUrl) {
+                const link = document.createElement('a');
+                link.href = currentImageUrl;
+                link.download = 'صورة المدرسة.jpg';
+                link.click();
+            }
+        }
+
+        // إخفاء جميع الحاويات
         function hideAllContainers() {
-            const containers = ['servicesContainer', 'sectionsContainer', 'contentContainer'];
-            containers.forEach(id => {
-                const element = document.getElementById(id);
-                if (element) element.classList.add('hidden');
-            });
+            document.getElementById('servicesContainer').classList.add('hidden');
+            document.getElementById('sectionsContainer').classList.add('hidden');
+            document.getElementById('contentContainer').classList.add('hidden');
         }
 
+        // المحتوى الافتراضي للخدمات
         function getDefaultServiceContent(serviceKey) {
             const defaultContents = {
                 'ai': '🤖 **المساعد الذكي**\n\nمرحباً! أنا مساعدك الذكي للرد على استفساراتك المدرسية.\n\nما الذي تريد أن تسأل عنه؟',
                 'broadcast': '📢 **آخر الإعلانات**\n\n• اجتماع أولياء الأمور: الخميس القادم\n• إجازة نصف العام: تبدأ 15 فبراير\n• اختبار الرياضيات: الأربعاء',
                 'exams': '📋 **الاختبارات القادمة**\n\n• الرياضيات: الأربعاء 10 فبراير\n• اللغة العربية: الخميس 11 فبراير\n• العلوم: الأحد 14 فبراير',
                 'contact': '📞 **معلومات التواصل**\n\n• الهاتف: 011-234-5678\n• البريد: info@school.edu.sa\n• العنوان: شارع التعليم، الرياض',
-                'homework': '📝 **الواجبات المطلوبة**\n\n• الرياضيات: حل التمارين ص 45-47\n• العربي: كتابة موضوع تعبير\n• العلوم: قراءة الفصل الثالث',
-                'programs': '🏆 **البرامج والمسابقات**\n\n• مسابقة القرآن الكريم\n• برنامج المواهب الطلابية\n• مسابقة الرياضيات'
+                'homework': '📝 **الواجبات المطلوبة**\n\n• الرياضيات: حل التمارين ص 45-47\n• العربي: كتابة موضوع تعبير\n• العلوم: قراءة الفصل الثالث\n• الإنجليزي: حفظ المفردات الجديدة',
+                'programs': '🏆 **البرامج والمسابقات**\n\n• مسابقة القرآن الكريم\n• برنامج المواهب الطلابية\n• مسابقة الرياضيات\n• معرض العلوم السنوي'
             };
             return defaultContents[serviceKey] || 'المحتوى غير متوفر حالياً.';
         }
@@ -641,11 +611,11 @@
             addMessage(response, false);
         }
 
+        // إرسال رسالة
         function sendMessage() {
             const input = document.getElementById('messageInput');
-            if (!input) return;
-            
             const message = input.value.trim();
+            
             if (message) {
                 addMessage(message, true);
                 input.value = '';
@@ -662,10 +632,9 @@
             }
         }
 
+        // إضافة رسالة
         function addMessage(text, isUser) {
             const messagesArea = document.getElementById('messagesArea');
-            if (!messagesArea) return;
-            
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message-bubble';
             
@@ -689,19 +658,15 @@
             messagesArea.scrollTop = messagesArea.scrollHeight;
         }
 
-        // معالجة الأخطاء العالمية
-        window.addEventListener('error', function(e) {
-            console.log('تم التعامل مع الخطأ:', e.error);
-        });
-
-        window.addEventListener('unhandledrejection', function(e) {
-            console.log('تم التعامل مع الرفض:', e.reason);
-            e.preventDefault();
+        // التعامل مع زر Enter
+        document.getElementById('messageInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
         });
 
         // بدء التطبيق
         document.addEventListener('DOMContentLoaded', function() {
-            initTelegramWebApp();
             loadData();
         });
     </script>
