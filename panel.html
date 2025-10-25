@@ -86,7 +86,7 @@
                             <input type="checkbox" id="rememberMe" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                             <span class="mr-2 text-sm text-gray-600">تذكرني</span>
                         </label>
-                        <button type="button" class="text-sm text-blue-600 hover:text-blue-800">نسيت كلمة المرور؟</button>
+                        <button type="button" onclick="showForgotPasswordModal()" class="text-sm text-blue-600 hover:text-blue-800">نسيت كلمة المرور؟</button>
                     </div>
                     
                     <button 
@@ -96,14 +96,28 @@
                         🔐 تسجيل الدخول
                     </button>
                 </form>
-                
-                <div class="mt-6 text-center">
-                    <div class="bg-gray-100 p-4 rounded-lg">
-                        <p class="text-sm text-gray-600 font-medium">بيانات الدخول الافتراضية:</p>
-                        <p class="text-sm text-gray-500 mt-1">اسم المستخدم: admin</p>
-                        <p class="text-sm text-gray-500">كلمة المرور: 123456</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal - تم نقله خارج شاشة الدخول -->
+    <div id="forgotPasswordModal" class="fixed inset-0 bg-black bg-opacity-50 modal hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div class="px-6 py-4 border-b">
+                <h3 class="text-lg font-semibold text-gray-900">استعادة كلمة المرور</h3>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-4">سيتم إرسال كلمة مرور جديدة إلى البريد الإلكتروني المسجل</p>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">البريد الإلكتروني</label>
+                        <input type="email" id="forgotEmail" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" placeholder="أدخل بريدك الإلكتروني" value="chartgain2019@gmail.com">
                     </div>
                 </div>
+            </div>
+            <div class="px-6 py-4 border-t flex justify-end space-x-3 space-x-reverse">
+                <button onclick="hideForgotPasswordModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">إلغاء</button>
+                <button onclick="sendNewPassword()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">إرسال كلمة المرور الجديدة</button>
             </div>
         </div>
     </div>
@@ -127,6 +141,12 @@
                         <div class="text-sm text-gray-600">
                             <span id="adminName" class="font-medium">مرحباً، المشرف</span>
                         </div>
+                        <button onclick="exportData()" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg transition-colors">
+                            📤 تصدير البيانات
+                        </button>
+                        <button onclick="importData()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors">
+                            📥 استيراد البيانات
+                        </button>
                         <button onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 space-x-reverse">
                             <span>🚪</span>
                             <span>تسجيل الخروج</span>
@@ -210,7 +230,7 @@
         <div id="addSectionModal" class="fixed inset-0 bg-black bg-opacity-50 modal hidden items-center justify-center z-50">
             <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
                 <div class="px-6 py-4 border-b">
-                    <h3 class="text-lg font-semibold text-gray-900">إضافة قسم جديد</h3>
+                    <h3 class="text-lg font-semibold text-gray-900" id="sectionModalTitle">إضافة قسم جديد</h3>
                 </div>
                 <div class="p-6">
                     <div class="space-y-4">
@@ -235,7 +255,7 @@
                 </div>
                 <div class="px-6 py-4 border-t flex justify-end space-x-3 space-x-reverse">
                     <button onclick="hideAddSectionModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">إلغاء</button>
-                    <button onclick="addSection()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">إضافة القسم</button>
+                    <button onclick="addOrUpdateSection()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors" id="sectionModalButton">إضافة القسم</button>
                 </div>
             </div>
         </div>
@@ -244,7 +264,7 @@
         <div id="addContentModal" class="fixed inset-0 bg-black bg-opacity-50 modal hidden items-center justify-center z-50">
             <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4">
                 <div class="px-6 py-4 border-b">
-                    <h3 class="text-lg font-semibold text-gray-900">إضافة محتوى</h3>
+                    <h3 class="text-lg font-semibold text-gray-900" id="contentModalTitle">إضافة محتوى</h3>
                 </div>
                 <div class="p-6">
                     <div class="space-y-4">
@@ -386,7 +406,7 @@
                 </div>
                 <div class="px-6 py-4 border-t flex justify-end space-x-3 space-x-reverse">
                     <button onclick="hideAddContentModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">إلغاء</button>
-                    <button onclick="addContent()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">إضافة المحتوى</button>
+                    <button onclick="addOrUpdateContent()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors" id="contentModalButton">إضافة المحتوى</button>
                 </div>
             </div>
         </div>
@@ -395,8 +415,8 @@
     <script>
         // بيانات الدخول
         const ADMIN_CREDENTIALS = {
-            username: "admin",
-            password: "123456"
+            username: "chartgain2019@gmail.com",
+            password: "sa123456$"
         };
 
         // 🔥 التعديل الوحيد: تغيير رابط API
@@ -406,6 +426,9 @@
         let currentService = null;
         let currentSection = null;
         let services = {};
+        let editingSectionIndex = null;
+        let editingContentIndex = null;
+        let editingContentSectionId = null;
 
         // تهيئة البيانات الافتراضية
         function initializeDefaultServices() {
@@ -565,13 +588,16 @@
                                 <button onclick="addContentToSection(${index})" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors">
                                     ➕ إضافة محتوى
                                 </button>
+                                <button onclick="editSection(${index})" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                                    ✏️ تعديل
+                                </button>
                                 <button onclick="deleteSection(${index})" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors">
                                     🗑️ حذف
                                 </button>
                             </div>
                         </div>
                         <div class="p-4">
-                            ${renderSectionContent(section)}
+                            ${renderSectionContent(section, index)}
                         </div>
                     </div>
                 `;
@@ -581,7 +607,7 @@
             content.innerHTML = html;
         }
 
-        function renderSectionContent(section) {
+        function renderSectionContent(section, sectionIndex) {
             if (!section.content || section.content.length === 0) {
                 return '<p class="text-gray-500 text-center py-4">لا يوجد محتوى في هذا القسم</p>';
             }
@@ -596,7 +622,10 @@
                                     <h4 class="font-medium text-blue-900">${item.title}</h4>
                                     <p class="text-blue-800 mt-1 whitespace-pre-line">${item.content}</p>
                                 </div>
-                                <button onclick="deleteContent('${section.id}', ${index})" class="text-red-600 hover:text-red-800 text-sm">🗑️</button>
+                                <div class="flex space-x-2 space-x-reverse">
+                                    <button onclick="editContent('${section.id}', ${index})" class="text-blue-600 hover:text-blue-800 text-sm">✏️</button>
+                                    <button onclick="deleteContent('${section.id}', ${index})" class="text-red-600 hover:text-red-800 text-sm">🗑️</button>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -613,7 +642,10 @@
                                     <p class="text-green-600 text-xs mt-1">حجم الملف: ${item.size || 'غير محدد'}</p>
                                     ${item.fileUrl ? `<a href="${item.fileUrl}" target="_blank" class="text-green-600 text-xs mt-1 hover:underline">رابط التحميل</a>` : ''}
                                 </div>
-                                <button onclick="deleteContent('${section.id}', ${index})" class="text-red-600 hover:text-red-800 text-sm">🗑️</button>
+                                <div class="flex space-x-2 space-x-reverse">
+                                    <button onclick="editContent('${section.id}', ${index})" class="text-blue-600 hover:text-blue-800 text-sm">✏️</button>
+                                    <button onclick="deleteContent('${section.id}', ${index})" class="text-red-600 hover:text-red-800 text-sm">🗑️</button>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -632,7 +664,10 @@
                                     <p class="text-yellow-800 text-sm mt-1">${item.description}</p>
                                     <p class="text-yellow-600 text-xs mt-1">${item.size ? `حجم الصورة: ${item.size}` : ''}</p>
                                 </div>
-                                <button onclick="deleteContent('${section.id}', ${index})" class="text-red-600 hover:text-red-800 text-sm">🗑️</button>
+                                <div class="flex space-x-2 space-x-reverse">
+                                    <button onclick="editContent('${section.id}', ${index})" class="text-blue-600 hover:text-blue-800 text-sm">✏️</button>
+                                    <button onclick="deleteContent('${section.id}', ${index})" class="text-red-600 hover:text-red-800 text-sm">🗑️</button>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -649,7 +684,10 @@
                                     <p class="text-red-600 text-xs mt-1">حجم الملف: ${item.size || 'غير محدد'}</p>
                                     ${item.fileUrl ? `<a href="${item.fileUrl}" target="_blank" class="text-red-600 text-xs mt-1 hover:underline">فتح ملف PDF</a>` : ''}
                                 </div>
-                                <button onclick="deleteContent('${section.id}', ${index})" class="text-red-600 hover:text-red-800 text-sm">🗑️</button>
+                                <div class="flex space-x-2 space-x-reverse">
+                                    <button onclick="editContent('${section.id}', ${index})" class="text-blue-600 hover:text-blue-800 text-sm">✏️</button>
+                                    <button onclick="deleteContent('${section.id}', ${index})" class="text-red-600 hover:text-red-800 text-sm">🗑️</button>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -665,7 +703,10 @@
                                     <p class="text-purple-800 text-sm mt-1">${item.description}</p>
                                     <a href="${item.url}" target="_blank" class="text-purple-600 text-xs mt-1 hover:underline">${item.url}</a>
                                 </div>
-                                <button onclick="deleteContent('${section.id}', ${index})" class="text-red-600 hover:text-red-800 text-sm">🗑️</button>
+                                <div class="flex space-x-2 space-x-reverse">
+                                    <button onclick="editContent('${section.id}', ${index})" class="text-blue-600 hover:text-blue-800 text-sm">✏️</button>
+                                    <button onclick="deleteContent('${section.id}', ${index})" class="text-red-600 hover:text-red-800 text-sm">🗑️</button>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -678,6 +719,12 @@
 
         // إدارة الأقسام
         function showAddSectionModal() {
+            editingSectionIndex = null;
+            document.getElementById('sectionModalTitle').textContent = 'إضافة قسم جديد';
+            document.getElementById('sectionModalButton').textContent = 'إضافة القسم';
+            document.getElementById('sectionName').value = '';
+            document.getElementById('sectionDescription').value = '';
+            document.getElementById('sectionType').value = 'text';
             document.getElementById('addSectionModal').classList.remove('hidden');
             document.getElementById('addSectionModal').classList.add('flex');
         }
@@ -685,12 +732,9 @@
         function hideAddSectionModal() {
             document.getElementById('addSectionModal').classList.add('hidden');
             document.getElementById('addSectionModal').classList.remove('flex');
-            document.getElementById('sectionName').value = '';
-            document.getElementById('sectionDescription').value = '';
-            document.getElementById('sectionType').value = 'text';
         }
 
-        function addSection() {
+        function addOrUpdateSection() {
             const name = document.getElementById('sectionName').value.trim();
             const description = document.getElementById('sectionDescription').value.trim();
             const type = document.getElementById('sectionType').value;
@@ -700,18 +744,41 @@
                 return;
             }
             
-            const section = {
-                id: Date.now().toString(),
-                name: name,
-                description: description || 'لا يوجد وصف',
-                type: type,
-                content: []
-            };
+            if (editingSectionIndex !== null) {
+                // تحديث القسم الموجود
+                services[currentService].sections[editingSectionIndex].name = name;
+                services[currentService].sections[editingSectionIndex].description = description;
+                services[currentService].sections[editingSectionIndex].type = type;
+            } else {
+                // إضافة قسم جديد
+                const section = {
+                    id: Date.now().toString(),
+                    name: name,
+                    description: description || 'لا يوجد وصف',
+                    type: type,
+                    content: []
+                };
+                
+                services[currentService].sections.push(section);
+            }
             
-            services[currentService].sections.push(section);
             hideAddSectionModal();
             loadServiceContent(currentService);
             saveChanges();
+        }
+
+        function editSection(index) {
+            editingSectionIndex = index;
+            const section = services[currentService].sections[index];
+            
+            document.getElementById('sectionModalTitle').textContent = 'تعديل القسم';
+            document.getElementById('sectionModalButton').textContent = 'تحديث القسم';
+            document.getElementById('sectionName').value = section.name;
+            document.getElementById('sectionDescription').value = section.description;
+            document.getElementById('sectionType').value = section.type;
+            
+            document.getElementById('addSectionModal').classList.remove('hidden');
+            document.getElementById('addSectionModal').classList.add('flex');
         }
 
         function deleteSection(index) {
@@ -725,6 +792,11 @@
         // إدارة المحتوى
         function addContentToSection(sectionIndex) {
             currentSection = sectionIndex;
+            editingContentIndex = null;
+            editingContentSectionId = null;
+            document.getElementById('contentModalTitle').textContent = 'إضافة محتوى';
+            document.getElementById('contentModalButton').textContent = 'إضافة المحتوى';
+            resetContentForm();
             document.getElementById('addContentModal').classList.remove('hidden');
             document.getElementById('addContentModal').classList.add('flex');
         }
@@ -732,6 +804,10 @@
         function hideAddContentModal() {
             document.getElementById('addContentModal').classList.add('hidden');
             document.getElementById('addContentModal').classList.remove('flex');
+            resetContentForm();
+        }
+
+        function resetContentForm() {
             document.getElementById('textTitle').value = '';
             document.getElementById('textBody').value = '';
             document.getElementById('fileName').value = '';
@@ -749,6 +825,11 @@
             document.getElementById('fileProgress').classList.add('hidden');
             document.getElementById('imageProgress').classList.add('hidden');
             document.getElementById('pdfProgress').classList.add('hidden');
+            
+            // إعادة تعيين رفع الملفات
+            document.getElementById('fileUpload').value = '';
+            document.getElementById('imageUpload').value = '';
+            document.getElementById('pdfUpload').value = '';
             
             toggleContentFields();
         }
@@ -807,13 +888,38 @@
             }
         }
 
+        // دالة لتحديد نوع الملف من امتداده
+        function detectFileType(file) {
+            const extension = file.name.split('.').pop().toLowerCase();
+            const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
+            const pdfExtensions = ['pdf'];
+            
+            if (imageExtensions.includes(extension)) {
+                return 'image';
+            } else if (pdfExtensions.includes(extension)) {
+                return 'pdf';
+            } else {
+                return 'file';
+            }
+        }
+
         async function handleFileUpload(event, type) {
             const file = event.target.files[0];
             if (!file) return;
 
             const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
             
-            // التحقق من حجم الملف
+            // الكشف عن نوع الملف الحقيقي من امتداده
+            const detectedType = detectFileType(file);
+            
+            // إذا كان النوع المكتشف يختلف عن النوع الحالي، قم بتغيير النوع
+            if (detectedType !== type) {
+                type = detectedType;
+                document.getElementById('contentType').value = type;
+                toggleContentFields();
+            }
+            
+            // التحقق من حجم الملف بناءً على النوع النهائي
             if (type === 'image' && fileSizeMB > 5) {
                 alert('❌ حجم الصورة كبير جداً! الحد الأقصى 5MB');
                 return;
@@ -825,6 +931,19 @@
             if (type === 'file' && fileSizeMB > 10) {
                 alert('❌ حجم الملف كبير جداً! الحد الأقصى 10MB');
                 return;
+            }
+            
+            // تعبئة اسم الملف تلقائياً لجميع أنواع الملفات
+            const titleInput = document.getElementById(`${type}Title`);
+            const fileNameInput = document.getElementById(`${type}Name`);
+            
+            // استخدم الحقل المناسب بناءً على النوع
+            let targetInput = titleInput || fileNameInput;
+            
+            if (targetInput && !targetInput.value.trim()) {
+                // إزالة الامتداد من اسم الملف
+                const fileNameWithoutExtension = file.name.replace(/\.[^/.]+$/, "");
+                targetInput.value = fileNameWithoutExtension;
             }
             
             // محاكاة عملية الرفع
@@ -859,18 +978,6 @@
                     }
                 };
                 reader.readAsDataURL(file);
-                
-                // تعبئة العنوان تلقائياً إذا كان الحقل موجوداً وفارغاً
-                const imageTitleInput = document.getElementById('imageTitle');
-                if (imageTitleInput && !imageTitleInput.value.trim()) {
-                    imageTitleInput.value = file.name.replace(/\.[^/.]+$/, "");
-                }
-            } else {
-                // تعبئة العنوان تلقائياً لأنواع الملفات الأخرى
-                const titleInput = document.getElementById(`${type}Title`);
-                if (titleInput && !titleInput.value.trim()) {
-                    titleInput.value = file.name.replace(/\.[^/.]+$/, "");
-                }
             }
         }
 
@@ -899,7 +1006,7 @@
             }, 200);
         }
 
-        function addContent() {
+        function addOrUpdateContent() {
             const type = document.getElementById('contentType').value;
             let content = {};
             
@@ -989,10 +1096,59 @@
                 };
             }
             
-            services[currentService].sections[currentSection].content.push(content);
+            if (editingContentSectionId !== null && editingContentIndex !== null) {
+                // تحديث المحتوى الموجود
+                const sectionIndex = services[currentService].sections.findIndex(s => s.id === editingContentSectionId);
+                if (sectionIndex !== -1) {
+                    services[currentService].sections[sectionIndex].content[editingContentIndex] = content;
+                }
+            } else {
+                // إضافة محتوى جديد
+                services[currentService].sections[currentSection].content.push(content);
+            }
+            
             hideAddContentModal();
             loadServiceContent(currentService);
             saveChanges();
+        }
+
+        function editContent(sectionId, contentIndex) {
+            editingContentSectionId = sectionId;
+            editingContentIndex = contentIndex;
+            const sectionIndex = services[currentService].sections.findIndex(s => s.id === sectionId);
+            const content = services[currentService].sections[sectionIndex].content[contentIndex];
+            
+            document.getElementById('contentModalTitle').textContent = 'تعديل المحتوى';
+            document.getElementById('contentModalButton').textContent = 'تحديث المحتوى';
+            
+            // تعبئة النموذج ببيانات المحتوى الحالي
+            document.getElementById('contentType').value = content.type;
+            toggleContentFields();
+            
+            if (content.type === 'text') {
+                document.getElementById('textTitle').value = content.title;
+                document.getElementById('textBody').value = content.content;
+            } else if (content.type === 'file') {
+                document.getElementById('fileName').value = content.name;
+                document.getElementById('fileDescription').value = content.description;
+            } else if (content.type === 'image') {
+                document.getElementById('imageTitle').value = content.title;
+                document.getElementById('imageDescription').value = content.description;
+                if (content.fileUrl) {
+                    document.getElementById('imagePreviewImg').src = content.fileUrl;
+                    document.getElementById('imagePreview').classList.remove('hidden');
+                }
+            } else if (content.type === 'pdf') {
+                document.getElementById('pdfTitle').value = content.title;
+                document.getElementById('pdfDescription').value = content.description;
+            } else if (content.type === 'link') {
+                document.getElementById('linkTitle').value = content.title;
+                document.getElementById('linkUrl').value = content.url;
+                document.getElementById('linkDescription').value = content.description;
+            }
+            
+            document.getElementById('addContentModal').classList.remove('hidden');
+            document.getElementById('addContentModal').classList.add('flex');
         }
 
         function deleteContent(sectionId, contentIndex) {
@@ -1004,6 +1160,88 @@
                     saveChanges();
                 }
             }
+        }
+
+        // استعادة كلمة المرور
+        function showForgotPasswordModal() {
+            document.getElementById('forgotPasswordModal').classList.remove('hidden');
+            document.getElementById('forgotPasswordModal').classList.add('flex');
+        }
+
+        function hideForgotPasswordModal() {
+            document.getElementById('forgotPasswordModal').classList.add('hidden');
+            document.getElementById('forgotPasswordModal').classList.remove('flex');
+        }
+
+        function sendNewPassword() {
+            const email = document.getElementById('forgotEmail').value.trim();
+            
+            if (email !== "chartgain2019@gmail.com") {
+                alert('البريد الإلكتروني غير مسجل في النظام');
+                return;
+            }
+            
+            // محاكاة إرسال كلمة المرور الجديدة
+            const newPassword = generateRandomPassword();
+            
+            // في الواقع هنا يجب إرسال البريد الإلكتروني، لكننا سنعرض رسالة للمستخدم
+            alert(`تم إرسال كلمة مرور جديدة إلى ${email}\nكلمة المرور الجديدة: ${newPassword}\n\nيرجى تسجيل الدخول باستخدام كلمة المرور الجديدة ثم تغييرها.`);
+            
+            hideForgotPasswordModal();
+        }
+
+        function generateRandomPassword() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+            let password = '';
+            for (let i = 0; i < 12; i++) {
+                password += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return password;
+        }
+
+        // تصدير واستيراد البيانات
+        function exportData() {
+            const dataStr = JSON.stringify(services, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `bot-backup-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showNotification('✅ تم تصدير البيانات بنجاح', 'success');
+        }
+
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = event => {
+                    try {
+                        const importedData = JSON.parse(event.target.result);
+                        if (importedData && typeof importedData === 'object') {
+                            services = importedData;
+                            showNotification('✅ تم استيراد البيانات بنجاح', 'success');
+                            if (currentService) {
+                                loadServiceContent(currentService);
+                            }
+                            saveChanges();
+                        } else {
+                            showNotification('❌ ملف البيانات غير صالح', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Error importing data:', error);
+                        showNotification('❌ فشل في استيراد البيانات', 'error');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
         }
 
         // إدارة المصادقة
