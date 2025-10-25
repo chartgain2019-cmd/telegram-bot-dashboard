@@ -217,6 +217,10 @@
 
         // دوال مساعدة للصور والروابط
         function openImageModal(imageUrl) {
+            if (!imageUrl || imageUrl === 'undefined') {
+                console.log('رابط الصورة غير صالح');
+                return;
+            }
             currentImageUrl = imageUrl;
             const modal = document.getElementById('imageModal');
             const modalImage = document.getElementById('modalImage');
@@ -234,18 +238,27 @@
         }
 
         function downloadCurrentImage() {
-            if (currentImageUrl) {
+            if (currentImageUrl && currentImageUrl !== 'undefined') {
                 downloadImage(currentImageUrl, 'صورة');
             }
         }
 
         function downloadImage(url, filename) {
+            if (!url || url === 'undefined') {
+                console.log('رابط التحميل غير صالح');
+                return;
+            }
             const a = document.createElement('a');
             a.href = url;
             a.download = filename || 'صورة';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
+        }
+
+        // دالة مساعدة للتحقق من الروابط
+        function isValidUrl(url) {
+            return url && url !== 'undefined' && url.startsWith('http');
         }
 
         // Initialize Telegram Web App بشكل آمن
@@ -496,59 +509,65 @@
                             `;
                         } else if (item.type === 'pdf' || item.type === 'file') {
                             const fileUrl = item.fileUrl || item.url;
-                            contentHtml += `
-                                <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2 flex items-center justify-between file-item">
-                                    <div class="flex items-center">
-                                        <span class="ml-2 text-lg">📄</span>
-                                        <div>
-                                            <p class="text-gray-800 font-medium text-xs">${item.title || item.name}</p>
-                                            <p class="text-gray-500 text-xs">ملف PDF</p>
+                            if (isValidUrl(fileUrl)) {
+                                contentHtml += `
+                                    <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2 flex items-center justify-between file-item">
+                                        <div class="flex items-center">
+                                            <span class="ml-2 text-lg">📄</span>
+                                            <div>
+                                                <p class="text-gray-800 font-medium text-xs">${item.title || item.name}</p>
+                                                <p class="text-gray-500 text-xs">ملف PDF</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex space-x-1 space-x-reverse">
+                                            <a href="${fileUrl}" target="_blank" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs transition-colors">
+                                                معاينة
+                                            </a>
+                                            <a href="${fileUrl}" download class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors">
+                                                تحميل
+                                            </a>
                                         </div>
                                     </div>
-                                    <div class="flex space-x-1 space-x-reverse">
-                                        <a href="${fileUrl}" target="_blank" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs transition-colors">
-                                            معاينة
-                                        </a>
-                                        <a href="${fileUrl}" download class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors">
-                                            تحميل
-                                        </a>
-                                    </div>
-                                </div>
-                            `;
+                                `;
+                            }
                         } else if (item.type === 'image') {
                             const imageUrl = item.imageUrl || item.url;
-                            contentHtml += `
-                                <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2">
-                                    <p class="text-gray-800 font-medium text-xs mb-2">${item.title || 'صورة'}</p>
-                                    <img src="${imageUrl}" alt="${item.title || 'صورة'}" class="w-full h-auto rounded-lg cursor-pointer mb-2" onclick="openImageModal('${imageUrl}')">
-                                    <div class="flex justify-center space-x-2 space-x-reverse">
-                                        <button onclick="openImageModal('${imageUrl}')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs transition-colors">
-                                            🔍 تكبير الصورة
-                                        </button>
-                                        <button onclick="downloadImage('${imageUrl}', '${item.title || 'image'}')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs transition-colors">
-                                            📥 حفظ الصورة
-                                        </button>
-                                    </div>
-                                </div>
-                            `;
-                        } else if (item.type === 'link') {
-                            const linkUrl = item.linkUrl || item.url;
-                            contentHtml += `
-                                <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2 flex items-center justify-between file-item">
-                                    <div class="flex items-center">
-                                        <span class="ml-2 text-lg">🔗</span>
-                                        <div>
-                                            <p class="text-gray-800 font-medium text-xs">${item.title || item.name}</p>
-                                            <p class="text-gray-500 text-xs">رابط خارجي</p>
+                            if (isValidUrl(imageUrl)) {
+                                contentHtml += `
+                                    <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2">
+                                        <p class="text-gray-800 font-medium text-xs mb-2">${item.title || 'صورة'}</p>
+                                        <img src="${imageUrl}" alt="${item.title || 'صورة'}" class="w-full h-auto rounded-lg cursor-pointer mb-2" onclick="openImageModal('${imageUrl}')">
+                                        <div class="flex justify-center space-x-2 space-x-reverse">
+                                            <button onclick="openImageModal('${imageUrl}')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs transition-colors">
+                                                🔍 تكبير الصورة
+                                            </button>
+                                            <button onclick="downloadImage('${imageUrl}', '${item.title || 'image'}')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs transition-colors">
+                                                📥 حفظ الصورة
+                                            </button>
                                         </div>
                                     </div>
-                                    <div class="flex space-x-1 space-x-reverse">
-                                        <a href="${linkUrl}" target="_blank" class="bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs transition-colors">
-                                            فتح الرابط
-                                        </a>
+                                `;
+                            }
+                        } else if (item.type === 'link') {
+                            const linkUrl = item.linkUrl || item.url;
+                            if (isValidUrl(linkUrl)) {
+                                contentHtml += `
+                                    <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2 flex items-center justify-between file-item">
+                                        <div class="flex items-center">
+                                            <span class="ml-2 text-lg">🔗</span>
+                                            <div>
+                                                <p class="text-gray-800 font-medium text-xs">${item.title || item.name}</p>
+                                                <p class="text-gray-500 text-xs">رابط خارجي</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex space-x-1 space-x-reverse">
+                                            <a href="${linkUrl}" target="_blank" class="bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs transition-colors">
+                                                فتح الرابط
+                                            </a>
+                                        </div>
                                     </div>
-                                </div>
-                            `;
+                                `;
+                            }
                         }
                     });
                 } else {
