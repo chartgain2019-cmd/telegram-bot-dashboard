@@ -214,9 +214,9 @@
             </div>
             <img id="modalImage" src="" alt="معاينة الصورة" class="max-w-full max-h-96 object-contain rounded">
             <div class="mt-4 flex justify-center space-x-2 space-x-reverse">
-                <button onclick="downloadCurrentImage()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">
+                <a id="downloadImageLink" href="#" download class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">
                     📥 تحميل الصورة
-                </button>
+                </a>
                 <button onclick="closeImageModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors">
                     إغلاق
                 </button>
@@ -251,36 +251,17 @@
             document.head.appendChild(script);
         }
 
-        // دالة محسنة للتحقق من صحة الروابط
-        function isValidUrl(url) {
-            if (!url || url === 'undefined' || url.includes('undefined') || url.trim() === '') {
-                return false;
-            }
-            
-            const cleanUrl = url.toString().trim();
-            
-            // قبول الروابط التي تبدأ بـ http أو https
-            if (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
-                return true;
-            }
-            
-            return false;
-        }
-
-        // تحسين دالة openImageModal
+        // فتح معاينة الصورة
         function openImageModal(imageUrl) {
-            if (!isValidUrl(imageUrl)) {
-                console.log('رابط الصورة غير صالح:', imageUrl);
-                addMessage('⚠️ رابط الصورة غير صالح أو غير متاح حالياً', false);
-                return;
-            }
-            
             currentImageUrl = imageUrl;
             const modal = document.getElementById('imageModal');
             const modalImage = document.getElementById('modalImage');
+            const downloadLink = document.getElementById('downloadImageLink');
             
-            if (modal && modalImage) {
+            if (modal && modalImage && downloadLink) {
                 modalImage.src = imageUrl;
+                downloadLink.href = imageUrl;
+                downloadLink.download = 'صورة المدرسة.jpg';
                 modal.classList.remove('hidden');
             }
         }
@@ -290,28 +271,6 @@
             if (modal) {
                 modal.classList.add('hidden');
             }
-        }
-
-        function downloadCurrentImage() {
-            if (currentImageUrl && isValidUrl(currentImageUrl)) {
-                downloadImage(currentImageUrl, 'صورة المدرسة.jpg');
-            }
-        }
-
-        // تحسين دالة downloadImage
-        function downloadImage(url, filename) {
-            if (!isValidUrl(url)) {
-                console.log('رابط التحميل غير صالح:', url);
-                addMessage('⚠️ رابط التحميل غير صالح', false);
-                return;
-            }
-            
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = filename || 'ملف';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
         }
 
         // Initialize Telegram Web App بشكل آمن
@@ -566,7 +525,7 @@
             showServiceContent(serviceKey, sectionIndex);
         }
 
-        // دالة محسنة لعرض محتوى الخدمة مع إصلاح مشكلة الملفات والصور والروابط
+        // دالة showServiceContent المحسنة من الكود الثاني
         function showServiceContent(serviceKey, sectionIndex) {
             hideAllContainers();
             document.getElementById('contentContainer').classList.remove('hidden');
@@ -579,8 +538,7 @@
             
             if (sectionIndex !== null) {
                 const section = service.sections[sectionIndex];
-                const currentLevel = document.getElementById('currentLevel');
-                if (currentLevel) currentLevel.textContent = `${service.name} - ${section.name}`;
+                document.getElementById('currentLevel').textContent = `${service.name} - ${section.name}`;
                 
                 contentHtml = `
                     <div class="message-bubble">
@@ -590,104 +548,77 @@
                 `;
                 
                 if (section.content && section.content.length > 0) {
-                    let hasValidContent = false;
-                    let contentItemsHtml = '';
-                    
                     section.content.forEach(item => {
                         if (item.type === 'text') {
-                            hasValidContent = true;
-                            contentItemsHtml += `
+                            contentHtml += `
                                 <div class="bg-white p-3 rounded-lg border border-gray-200 mb-2">
                                     <p class="text-gray-800 whitespace-pre-line text-xs">${item.content}</p>
                                 </div>
                             `;
                         } else if (item.type === 'pdf' || item.type === 'file') {
                             const fileUrl = item.fileUrl || item.url;
-                            if (isValidUrl(fileUrl)) {
-                                hasValidContent = true;
-                                const fileName = item.title || item.name || 'ملف';
-                                contentItemsHtml += `
-                                    <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2 flex items-center justify-between file-item">
+                            contentHtml += `
+                                <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2 flex items-center justify-between file-item">
+                                    <div class="flex items-center">
+                                        <span class="ml-2 text-lg">📄</span>
+                                        <div>
+                                            <p class="text-gray-800 font-medium text-xs">${item.title || item.name}</p>
+                                            <p class="text-gray-500 text-xs">ملف PDF</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex space-x-1 space-x-reverse">
+                                        <a href="${fileUrl}" target="_blank" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs transition-colors">
+                                            معاينة
+                                        </a>
+                                        <a href="${fileUrl}" download class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors">
+                                            تحميل
+                                        </a>
+                                    </div>
+                                </div>
+                            `;
+                        } else if (item.type === 'image') {
+                            const fileUrl = item.fileUrl || item.url;
+                            contentHtml += `
+                                <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2 file-item">
+                                    <div class="flex items-center justify-between mb-2">
                                         <div class="flex items-center">
-                                            <span class="ml-2 text-lg">📄</span>
+                                            <span class="ml-2 text-lg">🖼️</span>
                                             <div>
-                                                <p class="text-gray-800 font-medium text-xs">${fileName}</p>
-                                                <p class="text-gray-500 text-xs">${item.type === 'pdf' ? 'ملف PDF' : 'ملف'}</p>
+                                                <p class="text-gray-800 font-medium text-xs">${item.title || item.name}</p>
+                                                <p class="text-gray-500 text-xs">صورة</p>
                                             </div>
                                         </div>
                                         <div class="flex space-x-1 space-x-reverse">
-                                            <a href="${fileUrl}" target="_blank" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs transition-colors">
+                                            <button onclick="openImageModal('${fileUrl}')" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs transition-colors">
                                                 معاينة
-                                            </a>
-                                            <button onclick="downloadImage('${fileUrl}', '${fileName}')" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors">
-                                                تحميل
                                             </button>
+                                            <a href="${fileUrl}" download class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors">
+                                                تحميل
+                                            </a>
                                         </div>
                                     </div>
-                                `;
-                            }
-                        } else if (item.type === 'image') {
-                            const imageUrl = item.imageUrl || item.url || item.fileUrl;
-                            if (isValidUrl(imageUrl)) {
-                                hasValidContent = true;
-                                const imageTitle = item.title || item.name || 'صورة';
-                                contentItemsHtml += `
-                                    <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2 file-item">
-                                        <div class="flex items-center justify-between mb-2">
-                                            <div class="flex items-center">
-                                                <span class="ml-2 text-lg">🖼️</span>
-                                                <div>
-                                                    <p class="text-gray-800 font-medium text-xs">${imageTitle}</p>
-                                                    <p class="text-gray-500 text-xs">صورة</p>
-                                                </div>
-                                            </div>
-                                            <div class="flex space-x-1 space-x-reverse">
-                                                <button onclick="openImageModal('${imageUrl}')" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs transition-colors">
-                                                    معاينة
-                                                </button>
-                                                <button onclick="downloadImage('${imageUrl}', '${imageTitle}')" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors">
-                                                    تحميل
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <img src="${imageUrl}" alt="${imageTitle}" class="w-full rounded-lg cursor-pointer" onclick="openImageModal('${imageUrl}')">
-                                    </div>
-                                `;
-                            }
+                                    <img src="${fileUrl}" alt="${item.title || item.name}" class="w-full rounded-lg cursor-pointer" onclick="openImageModal('${fileUrl}')">
+                                </div>
+                            `;
                         } else if (item.type === 'link') {
-                            const linkUrl = item.linkUrl || item.url;
-                            if (isValidUrl(linkUrl)) {
-                                hasValidContent = true;
-                                const linkTitle = item.title || item.name || 'رابط';
-                                contentItemsHtml += `
-                                    <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2 flex items-center justify-between file-item">
+                            contentHtml += `
+                                <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2 file-item">
+                                    <div class="flex items-center justify-between">
                                         <div class="flex items-center">
                                             <span class="ml-2 text-lg">🔗</span>
                                             <div>
-                                                <p class="text-gray-800 font-medium text-xs">${linkTitle}</p>
-                                                <p class="text-gray-500 text-xs">رابط خارجي</p>
+                                                <p class="text-gray-800 font-medium text-xs">${item.title}</p>
+                                                <p class="text-gray-500 text-xs">رابط</p>
                                             </div>
                                         </div>
-                                        <div class="flex space-x-1 space-x-reverse">
-                                            <a href="${linkUrl}" target="_blank" class="bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs transition-colors">
-                                                فتح الرابط
-                                            </a>
-                                        </div>
+                                        <a href="${item.url}" target="_blank" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs transition-colors">
+                                            فتح الرابط
+                                        </a>
                                     </div>
-                                `;
-                            }
+                                </div>
+                            `;
                         }
                     });
-                    
-                    if (hasValidContent) {
-                        contentHtml += contentItemsHtml;
-                    } else {
-                        contentHtml += `
-                            <div class="bg-white p-3 rounded-lg border border-gray-200">
-                                <p class="text-gray-800 text-sm">لا يوجد محتوى متاح حالياً في هذا القسم.</p>
-                            </div>
-                        `;
-                    }
                 } else {
                     contentHtml += `
                         <div class="bg-white p-3 rounded-lg border border-gray-200">
@@ -698,8 +629,7 @@
                 
                 contentHtml += `</div></div>`;
             } else {
-                const currentLevel = document.getElementById('currentLevel');
-                if (currentLevel) currentLevel.textContent = service.name;
+                document.getElementById('currentLevel').textContent = service.name;
                 const defaultContent = getDefaultServiceContent(serviceKey);
                 contentHtml = `
                     <div class="message-bubble">
@@ -713,8 +643,7 @@
                 `;
             }
             
-            const contentContainer = document.getElementById('contentContainer');
-            if (contentContainer) contentContainer.innerHTML = contentHtml;
+            document.getElementById('contentContainer').innerHTML = contentHtml;
         }
 
         function hideAllContainers() {
