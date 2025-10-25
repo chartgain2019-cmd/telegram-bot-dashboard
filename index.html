@@ -60,8 +60,9 @@
         #imageModal {
             display: none;
         }
-        #imageModal.show {
-            display: flex;
+        #imageModal img { 
+            max-width: 100%; 
+            max-height: 70vh; 
         }
         
         /* ألوان مخصصة للأزرار */
@@ -214,6 +215,39 @@
         let currentSection = null;
         let currentImageUrl = null;
 
+        // دوال مساعدة للصور والروابط
+        function openImageModal(imageUrl) {
+            currentImageUrl = imageUrl;
+            const modal = document.getElementById('imageModal');
+            const modalImage = document.getElementById('modalImage');
+            if (modal && modalImage) {
+                modalImage.src = imageUrl;
+                modal.classList.remove('hidden');
+            }
+        }
+
+        function closeImageModal() {
+            const modal = document.getElementById('imageModal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function downloadCurrentImage() {
+            if (currentImageUrl) {
+                downloadImage(currentImageUrl, 'صورة');
+            }
+        }
+
+        function downloadImage(url, filename) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename || 'صورة';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
         // Initialize Telegram Web App بشكل آمن
         function initTelegramWebApp() {
             if (window.Telegram && Telegram.WebApp) {
@@ -356,7 +390,6 @@
             });
         }
 
-        // باقي الدوال تبقى كما هي مع تحسينات الأمان
         function selectService(serviceKey) {
             currentService = serviceKey;
             const service = botData.services[serviceKey];
@@ -478,6 +511,40 @@
                                         </a>
                                         <a href="${fileUrl}" download class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors">
                                             تحميل
+                                        </a>
+                                    </div>
+                                </div>
+                            `;
+                        } else if (item.type === 'image') {
+                            const imageUrl = item.imageUrl || item.url;
+                            contentHtml += `
+                                <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2">
+                                    <p class="text-gray-800 font-medium text-xs mb-2">${item.title || 'صورة'}</p>
+                                    <img src="${imageUrl}" alt="${item.title || 'صورة'}" class="w-full h-auto rounded-lg cursor-pointer mb-2" onclick="openImageModal('${imageUrl}')">
+                                    <div class="flex justify-center space-x-2 space-x-reverse">
+                                        <button onclick="openImageModal('${imageUrl}')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs transition-colors">
+                                            🔍 تكبير الصورة
+                                        </button>
+                                        <button onclick="downloadImage('${imageUrl}', '${item.title || 'image'}')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs transition-colors">
+                                            📥 حفظ الصورة
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        } else if (item.type === 'link') {
+                            const linkUrl = item.linkUrl || item.url;
+                            contentHtml += `
+                                <div class="bg-white p-2 rounded-lg border border-gray-200 mb-2 flex items-center justify-between file-item">
+                                    <div class="flex items-center">
+                                        <span class="ml-2 text-lg">🔗</span>
+                                        <div>
+                                            <p class="text-gray-800 font-medium text-xs">${item.title || item.name}</p>
+                                            <p class="text-gray-500 text-xs">رابط خارجي</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex space-x-1 space-x-reverse">
+                                        <a href="${linkUrl}" target="_blank" class="bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs transition-colors">
+                                            فتح الرابط
                                         </a>
                                     </div>
                                 </div>
