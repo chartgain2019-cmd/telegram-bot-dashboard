@@ -7,8 +7,6 @@
     <!-- استخدام Tailwind CSS مستقر -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- JotForm Chat Bot Script -->
-    <script src='https://cdn.jotfor.ms/agent/embedjs/019932f8eeb67de397162a0d8c2d541451fe/embed.js'></script>
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
     <style>
@@ -63,6 +61,24 @@
         #imageModal img { 
             max-width: 100%; 
             max-height: 70vh; 
+        }
+
+        /* تنسيق ثابت لروبوت الدردشة */
+        #jotform-chat-container {
+            position: fixed !important;
+            bottom: 20px !important;
+            left: 20px !important;
+            z-index: 1000 !important;
+            width: auto !important;
+            height: auto !important;
+        }
+
+        /* تأكد من أن الروبوت مرئي دائماً */
+        .jf-agent-embed-container {
+            position: fixed !important;
+            bottom: 20px !important;
+            left: 20px !important;
+            z-index: 1000 !important;
         }
         
         /* ألوان مخصصة للأزرار */
@@ -186,8 +202,8 @@
         </div>
     </div>
 
-    <!-- JotForm Chat Container -->
-    <div id="jotform-chat-container"></div>
+    <!-- JotForm Chat Container - ثابت في الزاوية -->
+    <div id="jotform-chat-container" style="position: fixed; bottom: 20px; left: 20px; z-index: 1000;"></div>
 
     <!-- Image Modal -->
     <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
@@ -214,6 +230,26 @@
         let currentService = null;
         let currentSection = null;
         let currentImageUrl = null;
+
+        // تحميل JotForm Chat بعد تحميل الصفحة
+        function loadJotFormChat() {
+            // إنشاء سكريبت JotForm بشكل ديناميكي
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jotfor.ms/agent/embedjs/019932f8eeb67de397162a0d8c2d541451fe/embed.js';
+            script.onload = function() {
+                console.log('JotForm Chat loaded successfully');
+                // تأكد من أن الحاوية مرئية
+                const chatContainer = document.getElementById('jotform-chat-container');
+                if (chatContainer) {
+                    chatContainer.style.display = 'block';
+                    chatContainer.style.visibility = 'visible';
+                }
+            };
+            script.onerror = function() {
+                console.log('Failed to load JotForm Chat');
+            };
+            document.head.appendChild(script);
+        }
 
         // دوال مساعدة للصور والروابط
         function openImageModal(imageUrl) {
@@ -325,11 +361,6 @@
                                         type: 'pdf', 
                                         title: 'واجب الرياضيات - الوحدة الثالثة',
                                         fileUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf'
-                                    },
-                                    { 
-                                        type: 'file', 
-                                        title: 'ملف الواجب النهائي',
-                                        fileUrl: 'https://file-examples.com/storage/fe8c7c1e86659dbd1a24c62/2017/10/file-example_PDF_500_kB.pdf'
                                     }
                                 ]
                             }
@@ -352,16 +383,6 @@
                                         type: 'image', 
                                         title: 'إعلان اجتماع أولياء الأمور',
                                         imageUrl: 'https://picsum.photos/400/300'
-                                    },
-                                    { 
-                                        type: 'image', 
-                                        title: 'نتائج الاختبارات',
-                                        imageUrl: 'https://picsum.photos/400/300?random=2'
-                                    },
-                                    { 
-                                        type: 'link', 
-                                        title: 'موقع المدرسة الإلكتروني',
-                                        linkUrl: 'https://www.school.edu.sa'
                                     }
                                 ]
                             }
@@ -384,11 +405,6 @@
                                         type: 'pdf', 
                                         title: 'خطة الفصل الدراسي',
                                         fileUrl: 'https://www.africau.edu/images/default/sample.pdf'
-                                    },
-                                    { 
-                                        type: 'file', 
-                                        title: 'دليل الطالب',
-                                        fileUrl: 'https://file-examples.com/storage/fe8c7c1e86659dbd1a24c62/2017/10/file-sample_1MB.doc'
                                     }
                                 ]
                             }
@@ -459,6 +475,7 @@
             });
         }
 
+        // باقي الدوال تبقى كما هي...
         function selectService(serviceKey) {
             currentService = serviceKey;
             const service = botData.services[serviceKey];
@@ -762,6 +779,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             initTelegramWebApp();
             loadData();
+            // تحميل روبوت الدردشة بعد تأخير بسيط لضمان تحميل الصفحة أولاً
+            setTimeout(loadJotFormChat, 1000);
         });
     </script>
 </body>
